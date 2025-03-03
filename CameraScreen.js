@@ -1,49 +1,37 @@
-import React, { useState, useEffect } from "react";
-import { Text, View, StyleSheet, Button } from "react-native";
-import { Camera } from "expo-camera";
+import React, { useState } from 'react';
+import { View, Button, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 
-export default function CameraScreen() {
-  const [hasPermission, setHasPermission] = useState(null);
-  const [cameraRef, setCameraRef] = useState(null);
-  const [scanned, setScanned] = useState(false);
+const ImagePickerExample = () => {
+  const [imageUri, setImageUri] = useState(null);
 
-  useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === "granted");
-    })();
-  }, []);
+  const selectImage = async () => {
+    // Запрос разрешений
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Permission denied!');
+      return;
+    }
 
-  if (hasPermission === null) {
-    return <View style={styles.container}><Text>Requesting camera permission...</Text></View>;
-  }
-  if (hasPermission === false) {
-    return <View style={styles.container}><Text>No access to camera</Text></View>;
-  }
+    // Открытие галереи
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      <Camera
-        ref={(ref) => setCameraRef(ref)}
-        style={StyleSheet.absoluteFillObject}
-      />
-      <View style={styles.buttonContainer}>
-        <Button title="Take Photo" onPress={() => console.log("Photo taken")} />
-      </View>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Button title="Выбрать фото" onPress={selectImage} />
+      {imageUri && <Image source={{ uri: imageUri }} style={{ width: 200, height: 200, marginTop: 20 }} />}
     </View>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  buttonContainer: {
-    position: "absolute",
-    bottom: 50,
-    alignSelf: "center",
-    backgroundColor: "white",
-    padding: 10,
-    borderRadius: 5,
-  },
-});
+export default ImagePickerExample;

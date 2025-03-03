@@ -7,10 +7,15 @@ import { NavigationContainer } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 // Импорт экранов
-import HomeScreen from './HomeScreen';
-import WaterCalculatorScreen from './WaterCalculator';
-import BarcodeScannerScreen from './CameraScreen';
-
+import Welcome from './Welcome';
+import SignUp from './SignUp';
+import Login from './Login'
+import Home from './HomeScreen';
+import WaterCalculator from './WaterCalculator';
+import BarcodeScanner from './CameraScreen';
+import Calendar from './Calendar';
+import Recipe from './Recipe';
+import MyProducts from './MyProducts';
 
 // Создаем навигаторы
 const Tab = createBottomTabNavigator();
@@ -30,18 +35,14 @@ function TabNavigator() {
             iconName = focused ? 'water' : 'water-outline';
           } else if (route.name === 'BarcodeScanner') {
             iconName = focused ? 'scan' : 'scan-outline';
-          } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
           }
           return <Icon name={iconName} size={size} color={color} />;
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      {/* <Tab.Screen name="Recipes" component={RecipesScreen} /> */}
-      <Tab.Screen name="WaterCalculator" component={WaterCalculatorScreen} />
-      <Tab.Screen name="BarcodeScanner" component={BarcodeScannerScreen} />
-      {/* <Tab.Screen name="Profile" component={ProfileScreen} /> */}
+      <Tab.Screen name="Home" component={Home} />
+      <Tab.Screen name="WaterCalculator" component={WaterCalculator} />
+      <Tab.Screen name="BarcodeScanner" component={BarcodeScanner} />
     </Tab.Navigator>
   );
 }
@@ -50,8 +51,10 @@ function TabNavigator() {
 function DrawerNavigator() {
   return (
     <Drawer.Navigator>
-      <Drawer.Screen name="Home" component={TabNavigator} />
-      {/* <Drawer.Screen name="Settings" component={SettingsScreen} /> */}
+      <Drawer.Screen name="Menu" component={TabNavigator} />
+      <Drawer.Screen name="Calendar" component={Calendar} />
+      <Drawer.Screen name="Recipe" component={Recipe} />
+      <Drawer.Screen name="MyProducts" component={MyProducts} />
     </Drawer.Navigator>
   );
 }
@@ -61,11 +64,27 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator>
+      <Stack.Screen
+        name = "Welcome"
+        component={Welcome}
+        options={{ headerShown: false }} 
+        />
         <Stack.Screen 
-          name="Main" 
+        name="SignUp" 
+        component={SignUp} 
+        options={{ headerShown: false }} 
+        />
+        <Stack.Screen
+        name = "Login"
+        component={Login}
+        options={{ headerShown: false }} 
+        />
+        <Stack.Screen 
+          name="Main"
           component={DrawerNavigator} 
           options={{ headerShown: false }} 
         />
+        
       </Stack.Navigator>
     </NavigationContainer>
   );
