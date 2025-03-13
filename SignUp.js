@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ImageBackground, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as Font from 'expo-font';
@@ -30,10 +30,16 @@ const SignUp = () => {
   }
 
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
     <ImageBackground 
       source={require('../NutriMind/assets/NMfon3.jpg')} 
       style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}
     >
+
+    <TouchableOpacity onPress={() => navigation.goBack()} style={{ position: 'absolute', top: 40, left: 20 }}>
+      <Image source={require('../NutriMind/assets/Back.png')} style={{ width: 24, height: 24 }} />
+    </TouchableOpacity>
+
       <Text style={{ fontSize: 40, color: '#6CBA69', marginBottom: 80, marginTop: 110, fontFamily: 'Montserrat-Bold' }}>
         Sign Up
       </Text>
@@ -86,6 +92,7 @@ const SignUp = () => {
       </TouchableOpacity>
             </View>
     </ImageBackground>
+    </TouchableWithoutFeedback>
   );
 };
 

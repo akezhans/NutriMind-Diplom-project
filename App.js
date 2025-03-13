@@ -1,100 +1,87 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { createStackNavigator } from '@react-navigation/stack';
+import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-
-// Импорт экранов
 import Welcome from './Welcome';
+import Login from './Login';
 import SignUp from './SignUp';
-import Login from './Login'
-import Home from './HomeScreen';
-import WaterCalculator from './WaterCalculator';
-import BarcodeScanner from './CameraScreen';
-import Calendar from './Calendar';
+import HomeScreen from './HomeScreen';
+import MyProfile from './MyProfile';
 import Recipe from './Recipe';
+import Calendar from './Calendar';
 import MyProducts from './MyProducts';
+import CameraScreen from './CameraScreen';
 
-// Создаем навигаторы
-const Tab = createBottomTabNavigator();
-const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
+const Drawer = createDrawerNavigator();
 
-// 📌 Вкладки внизу (Bottom Tabs)
-function TabNavigator() {
-  return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-          if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'WaterCalculator') {
-            iconName = focused ? 'water' : 'water-outline';
-          } else if (route.name === 'BarcodeScanner') {
-            iconName = focused ? 'scan' : 'scan-outline';
-          }
-          return <Icon name={iconName} size={size} color={color} />;
-        },
-      })}
-    >
-      <Tab.Screen name="Home" component={Home} />
-      <Tab.Screen name="WaterCalculator" component={WaterCalculator} />
-      <Tab.Screen name="BarcodeScanner" component={BarcodeScanner} />
-    </Tab.Navigator>
-  );
-}
-
-// 📌 Боковое меню (Drawer Navigation)
-function DrawerNavigator() {
-  return (
-    <Drawer.Navigator>
-      <Drawer.Screen name="Menu" component={TabNavigator} />
-      <Drawer.Screen name="Calendar" component={Calendar} />
-      <Drawer.Screen name="Recipe" component={Recipe} />
-      <Drawer.Screen name="MyProducts" component={MyProducts} />
-    </Drawer.Navigator>
-  );
-}
-
-// 📌 Главный стек навигации
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-      <Stack.Screen
-        name = "Welcome"
-        component={Welcome}
-        options={{ headerShown: false }} 
-        />
-        <Stack.Screen 
-        name="SignUp" 
-        component={SignUp} 
-        options={{ headerShown: false }} 
-        />
-        <Stack.Screen
-        name = "Login"
-        component={Login}
-        options={{ headerShown: false }} 
-        />
-        <Stack.Screen 
-          name="Main"
-          component={DrawerNavigator} 
-          options={{ headerShown: false }} 
-        />
-        
-      </Stack.Navigator>
+      {isAuthenticated ? (
+        <Drawer.Navigator drawerContent={(props) => <CustomDrawerContent {...props} setIsAuthenticated={setIsAuthenticated} /> }
+        screenOptions={{
+          drawerActiveTintColor: '#000000', // Цвет текста активного элемента
+          drawerActiveBackgroundColor: '#F6F6F6', // Цвет фона активного элемента
+          drawerInactiveTintColor: '#757575', // Цвет текста неактивных элементов
+          drawerStyle: { backgroundColor: '#FCFCFC', width: 256 }, // Цвет фона всего меню
+        }}>
+          <Drawer.Screen name="Dashboard" component={HomeScreen} options={{ drawerIcon: ({ color, size }) => (<Icon name="home-outline" size={size} color={color} />) }} />
+          <Drawer.Screen name="My Profile" component={MyProfile} options={{ drawerIcon: ({ color, size }) => (<Icon name="person-outline" size={size} color={color} />) }} />
+          <Drawer.Screen name="Recipes" component={Recipe} options={{ drawerIcon: ({ color, size }) => (<Icon name="restaurant-outline" size={size} color={color} />) }} />
+          <Drawer.Screen name="Calendar" component={Calendar} options={{ drawerIcon: ({ color, size }) => (<Icon name="calendar-outline" size={size} color={color} />) }} />
+          <Drawer.Screen name="My Products" component={MyProducts} options={{ drawerIcon: ({ color, size }) => (<Icon name="cube-outline" size={size} color={color} />) }} />
+          <Drawer.Screen name="Scan AI" component={CameraScreen} options={{ drawerIcon: ({ color, size }) => (<Icon name="scan-outline" size={size} color={color} />) }} />
+        </Drawer.Navigator>
+      ) : (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Welcome">{(props) => <Welcome {...props} setIsAuthenticated={setIsAuthenticated} />}</Stack.Screen>
+          <Stack.Screen name="Login">{(props) => <Login {...props} setIsAuthenticated={setIsAuthenticated} />}</Stack.Screen>
+          <Stack.Screen name="SignUp" component={SignUp} />
+        </Stack.Navigator>
+      )}
     </NavigationContainer>
   );
 }
 
-// 📌 Стили
+function CustomDrawerContent(props) {
+  return (
+    <DrawerContentScrollView {...props}>
+      <View style={styles.profileSection}>
+        <Image source={require('./assets/NMava.jpg')} style={styles.avatar} />
+        <Text style={styles.userName}>Akezhan Sailaubekov</Text>
+        <Text style={styles.userRole}>Mobile Developer</Text>
+      </View>
+      <DrawerItemList {...props} />
+      <DrawerItem label="Help" icon={({ color, size }) => <Icon name="help-circle-outline" size={size} color={color} />} onPress={() => {}} />
+      <DrawerItem label="Logout Account" icon={({ color, size }) => <Icon name="log-out-outline" size={size} color="red" />} labelStyle={{ color: 'red' }} onPress={() => props.setIsAuthenticated(false)} />
+    </DrawerContentScrollView>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
+  profileSection: {
     alignItems: 'center',
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 10,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  userRole: {
+    fontSize: 14,
+    color: 'gray',
   },
 });

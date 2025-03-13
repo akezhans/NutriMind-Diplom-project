@@ -8,6 +8,7 @@ import { Image } from 'react-native';
 const Welcome = () => {
   const navigation = useNavigation();
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  
 
   useEffect(() => {
     async function loadFonts() {
