@@ -50,7 +50,7 @@ function HomeScreen() {
               <Text style={styles.mealName}>{item.name}</Text>
               <Text style={styles.mealInfo}>{item.time}</Text>
             </View>
-            <Ionicons name="checkmark-circle" size={30} color="green" style={{marginLeft: 140}} />
+            <Ionicons name="checkmark-circle" size={30} color="green" style={{marginLeft: 130}} />
           </View>
         )}
       />
@@ -67,6 +67,7 @@ function HomeScreen() {
               <Text style={styles.mealName}>{item.name}</Text>
               <Text style={styles.mealInfo}>{item.time}</Text>
             </View>
+            <Ionicons name="checkmark-circle" size={30} color="green" style={{marginLeft: 130}} />
           </View>
         )}
       />

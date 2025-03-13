@@ -13,6 +13,7 @@ import Recipe from './Recipe';
 import Calendar from './Calendar';
 import MyProducts from './MyProducts';
 import CameraScreen from './CameraScreen';
+import Help from './Help';
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -36,6 +37,7 @@ export default function App() {
           <Drawer.Screen name="Calendar" component={Calendar} options={{ drawerIcon: ({ color, size }) => (<Icon name="calendar-outline" size={size} color={color} />) }} />
           <Drawer.Screen name="My Products" component={MyProducts} options={{ drawerIcon: ({ color, size }) => (<Icon name="cube-outline" size={size} color={color} />) }} />
           <Drawer.Screen name="Scan AI" component={CameraScreen} options={{ drawerIcon: ({ color, size }) => (<Icon name="scan-outline" size={size} color={color} />) }} />
+          <Drawer.Screen name="Help" component={Help} options={{ drawerIcon: ({ color, size }) => <Icon name="help-circle-outline" size={size} color={color} /> }} />
         </Drawer.Navigator>
       ) : (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -57,7 +59,6 @@ function CustomDrawerContent(props) {
         <Text style={styles.userRole}>Mobile Developer</Text>
       </View>
       <DrawerItemList {...props} />
-      <DrawerItem label="Help" icon={({ color, size }) => <Icon name="help-circle-outline" size={size} color={color} />} onPress={() => {}} />
       <DrawerItem label="Logout Account" icon={({ color, size }) => <Icon name="log-out-outline" size={size} color="red" />} labelStyle={{ color: 'red' }} onPress={() => props.setIsAuthenticated(false)} />
     </DrawerContentScrollView>
   );
