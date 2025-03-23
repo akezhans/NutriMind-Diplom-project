@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const days = [
   { id: '1', name: 'Mon', number: 13 },
@@ -12,13 +13,18 @@ const days = [
   { id: '7', name: 'Sun', number: 19 },
 ];
 
-const meals = [
-  { id: '1', name: 'Banana pudding', time: '15 min - 75 calories', checked: true, image: require('./assets/NMbrekfast.jpg') },
-  { id: '2', name: 'Beshbarmaq', time: '75 min - 250 calories', checked: true, image: require('./assets/NMlunch.jpg') },
-];
+const meals = [];
 
 function HomeScreen() {
   const [selectedDay, setSelectedDay] = useState('Wed');
+  const [mealPlan, setMealPlan] = useState([]);
+  const navigation = useNavigation();
+
+  const handleAddMeal = () => {
+    navigation.navigate('Recipes', { addMeal: (meal) => {
+      setMealPlan([...mealPlan, meal]);
+    }});
+  };
 
   return (
     <View style={styles.container}>
@@ -38,10 +44,9 @@ function HomeScreen() {
         ))}
       </View>
 
-      {/* Завтрак */}
-      <Text style={styles.sectionTitle}>Breakfast</Text>
+      {/* Планируемые приемы пищи */}
       <FlatList
-        data={meals.filter((meal) => meal.name === 'Banana pudding')}
+        data={mealPlan}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.mealItem}>
@@ -50,38 +55,20 @@ function HomeScreen() {
               <Text style={styles.mealName}>{item.name}</Text>
               <Text style={styles.mealInfo}>{item.time}</Text>
             </View>
-            <Ionicons name="checkmark-circle" size={30} color="green" style={{marginLeft: 130}} />
-          </View>
-        )}
-      />
-
-      {/* Обед */}
-      <Text style={styles.sectionTitle}>Lunch</Text>
-      <FlatList
-        data={meals.filter((meal) => meal.name === 'Beshbarmaq')}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.mealItem}>
-            <Image source={item.image} style={styles.mealImage} />
-            <View>
-              <Text style={styles.mealName}>{item.name}</Text>
-              <Text style={styles.mealInfo}>{item.time}</Text>
-            </View>
-            <Ionicons name="checkmark-circle" size={30} color="green" style={{marginLeft: 130}} />
+            <Ionicons name="checkmark-circle" size={30} color="green" style={{ marginLeft: 130 }} />
           </View>
         )}
       />
 
       {/* Кнопка "Add Meal" */}
-      <TouchableOpacity style={styles.addButton}>
-  <View style={styles.addButtonContent}>
-    <View style={styles.plusIcon}>
-      <Ionicons name="add" size={14} color="white" />
-    </View>
-    <Text style={styles.addButtonText}>Add Meal</Text>
-  </View>
-</TouchableOpacity>
-
+      <TouchableOpacity style={styles.addButton} onPress={handleAddMeal}>
+        <View style={styles.addButtonContent}>
+          <View style={styles.plusIcon}>
+            <Ionicons name="add" size={14} color="white" />
+          </View>
+          <Text style={styles.addButtonText}>Add Meal</Text>
+        </View>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -138,11 +125,6 @@ const styles = StyleSheet.create({
   selectedDayNumberText: {
     color: '#fff',
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
   mealItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -150,6 +132,7 @@ const styles = StyleSheet.create({
     height: 70,
     padding: 10,
     borderRadius: 10,
+    marginBottom: 10,
   },
   mealImage: {
     width: 50,
@@ -166,7 +149,7 @@ const styles = StyleSheet.create({
     color: '#888',
   },
   addButton: {
-    marginTop: 200,
+    marginTop: 20,
     backgroundColor: '#FFFFFF',
     paddingVertical: 15,
     borderRadius: 10,
@@ -175,12 +158,10 @@ const styles = StyleSheet.create({
     borderColor: '#D9D9D9',
     width: '100%',
   },
-  
   addButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  
   plusIcon: {
     width: 24,
     height: 24,
@@ -190,13 +171,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 8,
   },
-  
   addButtonText: {
     color: '#000000',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  
 });
 
 export default HomeScreen;
