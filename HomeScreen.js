@@ -1,74 +1,205 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { TouchableWithoutFeedback, Keyboard } from 'react-native';
+import MealModal from '../NutriMind/MealModal';
 
-const days = [
-  { id: '1', name: 'Mon', number: 13 },
-  { id: '2', name: 'Tue', number: 14 },
-  { id: '3', name: 'Wed', number: 15 },
-  { id: '4', name: 'Thu', number: 16 },
-  { id: '5', name: 'Fri', number: 17 },
-  { id: '6', name: 'Sat', number: 18 },
-  { id: '7', name: 'Sun', number: 19 },
+// Функция для получения текущей недели
+const getCurrentWeek = () => {
+  const today = new Date();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Понедельник
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(startOfWeek);
+    date.setDate(startOfWeek.getDate() + i);
+    return {
+      id: i.toString(),
+      name: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
+      number: date.getDate(),
+    };
+  });
+};
+
+// Категории приемов пищи
+const mealTypes = [
+  { id: '1', name: 'Breakfast', image: require('./assets/NMchoose1.jpg') },
+  { id: '2', name: 'Lunch', image: require('./assets/NMchoose2.png') },
+  { id: '3', name: 'Dinner', image: require('./assets/NMchoose3.jpg') },
+  { id: '4', name: 'Snacks', image: require('./assets/NMchoose4.jpg') },
 ];
 
-const meals = [];
-
 function HomeScreen() {
-  const [selectedDay, setSelectedDay] = useState('Wed');
-  const [mealPlan, setMealPlan] = useState([]);
+  const [selectedDay, setSelectedDay] = useState(getCurrentWeek()[2].name);
+  const [mealPlans, setMealPlans] = useState({});
+  const [showMealSelection, setShowMealSelection] = useState(false);
   const navigation = useNavigation();
 
   const handleAddMeal = () => {
-    navigation.navigate('Recipes', { addMeal: (meal) => {
-      setMealPlan([...mealPlan, meal]);
-    }});
+    setShowMealSelection(true);
+  };
+
+  const handleSelectMealType = (mealType) => {
+    setShowMealSelection(false);
+    navigation.navigate('Recipes', {
+      addMeal: (meal) => {
+        setMealPlans((prev) => ({
+          ...prev,
+          [selectedDay]: [...(prev[selectedDay] || []), { ...meal, type: mealType, description: meal.description }],
+        }));
+      },
+    });
+  };
+
+  const handleRemoveMeal = (day, mealIndex) => {
+    setMealPlans((prev) => ({
+      ...prev,
+      [day]: prev[day].filter((_, index) => index !== mealIndex),
+    }));
+  };
+
+
+  const [selectedMeal, setSelectedMeal] = useState(null);
+  const [isModalVisible, setModalVisible] = useState(false);
+  
+  const openModal = (meal) => {
+    setSelectedMeal(meal);
+    setModalVisible(true);
+  };
+  
+  const closeModal = () => {
+    setModalVisible(false);
+  };
+  
+  const handleDeleteMeal = (meal) => {
+    handleRemoveMeal(selectedDay, mealPlans[selectedDay].indexOf(meal));
+    closeModal();
   };
 
   return (
     <View style={styles.container}>
-      {/* Заголовок */}
-      <Text style={styles.title}>Today</Text>
-      <Text style={styles.subtitle}>Plan your weekly meals</Text>
+       {/* Заголовок */}
+       <Text style={styles.title}>Today</Text>
+        <Text style={styles.subtitle}>Plan your weekly meals</Text>
 
-      {/* Дни недели */}
-      <View style={styles.daysContainer}>
-        {days.map((day) => (
-          <TouchableOpacity key={day.id} onPress={() => setSelectedDay(day.name)} style={styles.dayWrapper}>
-            <Text style={[styles.dayText, selectedDay === day.name && styles.selectedDayText]}>{day.name}</Text>
-            <View style={[styles.dayNumber, selectedDay === day.name && styles.selectedDayNumber]}>
-              <Text style={[styles.dayNumberText, selectedDay === day.name && styles.selectedDayNumberText]}>{day.number}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+        {/* Дни недели */}
+        <View style={styles.daysContainer}>
+          {getCurrentWeek().map((day) => (
+            <TouchableOpacity
+              key={day.id}
+              onPress={() => setSelectedDay(day.name)}
+              style={styles.dayWrapper}
+            >
+              <Text
+                style={[
+                  styles.dayText,
+                  selectedDay === day.name && styles.selectedDayText,
+                ]}
+              >
+                {day.name}
+              </Text>
+              <View
+                style={[
+                  styles.dayNumber,
+                  selectedDay === day.name && styles.selectedDayNumber,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.dayNumberText,
+                    selectedDay === day.name && styles.selectedDayNumberText,
+                  ]}
+                >
+                  {day.number}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      <ScrollView 
+        contentContainerStyle={{ paddingBottom: 100 }} // Отступ, чтобы кнопка не перекрывала контент
+        keyboardShouldPersistTaps="handled"
+      >
+       
+
+        {/* Приемы пищи */}
+        {mealTypes.map((mealType) => {
+          const mealsForType = (mealPlans[selectedDay] || []).filter(
+            (meal) => meal.type.id === mealType.id
+          );
+
+          return mealsForType.length > 0 ? (
+            <View key={mealType.id} style={styles.mealSection}>
+              <Text style={styles.mealSectionTitle}>{mealType.name}</Text>
+              {mealsForType.map((item, index) => (
+  <TouchableOpacity key={index} onPress={() => openModal(item)}>
+    <View style={styles.mealItem}>
+      <Image source={item.image} style={styles.mealImage} />
+      <View style={styles.mealDetails}>
+        <Text style={styles.mealName}>{item.name}</Text>
       </View>
-
-      {/* Планируемые приемы пищи */}
-      <FlatList
-        data={mealPlan}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.mealItem}>
-            <Image source={item.image} style={styles.mealImage} />
-            <View>
-              <Text style={styles.mealName}>{item.name}</Text>
-              <Text style={styles.mealInfo}>{item.time}</Text>
+      <TouchableOpacity onPress={() => handleRemoveMeal(selectedDay, index)}>
+        <Ionicons name="trash-outline" size={24} color="red" />
+      </TouchableOpacity>
+    </View>
+  </TouchableOpacity>
+))}
             </View>
-            <Ionicons name="checkmark-circle" size={30} color="green" style={{ marginLeft: 130 }} />
-          </View>
-        )}
-      />
+          ) : null;
+        })}
+      </ScrollView>
 
       {/* Кнопка "Add Meal" */}
-      <TouchableOpacity style={styles.addButton} onPress={handleAddMeal}>
-        <View style={styles.addButtonContent}>
-          <View style={styles.plusIcon}>
-            <Ionicons name="add" size={14} color="white" />
+      <View style={styles.fixedAddButtonContainer}>
+        <TouchableOpacity style={styles.addButton} onPress={handleAddMeal}>
+          <View style={styles.addButtonContent}>
+            <View style={styles.plusIcon}>
+              <Ionicons name="add" size={14} color="white" />
+            </View>
+            <Text style={styles.addButtonText}>Add Meal</Text>
           </View>
-          <Text style={styles.addButtonText}>Add Meal</Text>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </View>
+
+      {/* Выбор типа приема пищи */}
+      {showMealSelection && (
+        <TouchableWithoutFeedback onPress={() => setShowMealSelection(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modal}>
+              <Text style={styles.modalTitle}>Add Meal</Text>
+              <FlatList
+                data={mealTypes}
+                keyExtractor={(item) => item.id}
+                numColumns={2}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.mealTypeItem}
+                    onPress={() => handleSelectMealType(item)}
+                  >
+                    <Image source={item.image} style={styles.mealTypeImage} />
+                    <Text style={styles.mealTypeText}>{item.name}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      )}
+      <MealModal 
+        meal={selectedMeal}
+        isVisible={isModalVisible}
+        onClose={closeModal}
+        onDelete={handleDeleteMeal}
+      />
     </View>
   );
 }
@@ -125,6 +256,15 @@ const styles = StyleSheet.create({
   selectedDayNumberText: {
     color: '#fff',
   },
+  mealSection: {
+    marginBottom: 15,
+  },
+  mealSectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  
   mealItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -140,6 +280,9 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginRight: 10,
   },
+  mealDetails: {
+    flex: 1,
+  },
   mealName: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -149,32 +292,80 @@ const styles = StyleSheet.create({
     color: '#888',
   },
   addButton: {
-    marginTop: 20,
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#D9D9D9',
-    width: '100%',
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    backgroundColor: '#FFFFFF', 
+    paddingVertical: 15, 
+    borderRadius: 10, 
+    borderWidth: 1, 
+    borderColor: '#D9D9D9', 
+    borderStyle: 'dashed', // Добавляем пунктирную рамку
+    width: '100%', 
   },
   addButtonContent: {
-    flexDirection: 'row',
+    flexDirection: 'row', 
     alignItems: 'center',
   },
   plusIcon: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#4CAF50',
-    justifyContent: 'center',
+    backgroundColor: '#4CAF50', // Зелёный круг
     alignItems: 'center',
-    marginRight: 8,
+    justifyContent: 'center',
+    marginRight: 10, // Отступ перед текстом
   },
   addButtonText: {
-    color: '#000000',
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#000',
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Затемнённый фон
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modal: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    width: 300,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  mealTypeItem: {
+    width: '48%', // Чтобы поместилось по 2 элемента в ряд
+    aspectRatio: 1, // Квадратные элементы
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 5,
+  },
+  
+  
+  mealTypeImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 15,
+  },
+  mealTypeText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 5,
   },
 });
 
