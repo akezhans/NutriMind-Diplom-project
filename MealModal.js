@@ -7,10 +7,23 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const MealModal = ({ meal, isVisible, onClose, onDelete }) => {
+  const navigation = useNavigation();
+
   if (!isVisible || !meal) return null;
 
+  const handleViewRecipe = () => {
+    if (!meal) {
+      console.error('Ошибка: meal не передан!');
+      return;
+    }
+  
+    onClose();
+    navigation.navigate('RecipeDetails', { meal });
+  };
+  
   return (
     <TouchableWithoutFeedback onPress={onClose}>
       <View style={styles.modalOverlay}>
@@ -19,7 +32,7 @@ const MealModal = ({ meal, isVisible, onClose, onDelete }) => {
           <Image source={meal.image} style={styles.modalImage} />
           <Text style={styles.description}>{meal.description}</Text>
 
-          <TouchableOpacity style={styles.viewButton}>
+          <TouchableOpacity style={styles.viewButton} onPress={handleViewRecipe}>
             <Text style={styles.viewButtonText}>View Recipe</Text>
           </TouchableOpacity>
 

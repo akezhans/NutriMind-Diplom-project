@@ -2,9 +2,30 @@ import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
+
 const recipes = [
   // Завтрак
-  { id: '1', name: 'Oatmeal', description: 'Полезная и питательная овсянка для идеального начала дня. Богата клетчаткой, улучшает пищеварение и дает энергию.', image: { uri: 'https://avatars.mds.yandex.net/i?id=f2a89966b2b64c4afafb0447abc53543cb472936-4872083-images-thumbs&n=13' } },
+  {
+    id: '1',
+    name: 'Oatmeal',
+    description: 'Полезная и питательная овсянка для идеального начала дня.',
+    image: { uri: 'https://avatars.mds.yandex.net/i?id=f2a89966b2b64c4afafb0447abc53543cb472936-4872083-images-thumbs&n=13' },
+    ingredients: ['1 стакан овсянки', '2 стакана воды или молока', '1 ч.л. меда', 'Ягоды по вкусу'],
+    prepTime: 5, // Время подготовки (например, 5 минут)
+  cookTime: 10, // Время приготовления (например, 10 минут)
+  ingredients: [
+    { name: 'Овсянка', amount: 1, unit: 'стакан' },
+    { name: 'Вода или молоко', amount: 2, unit: 'стакана' },
+    { name: 'Мёд', amount: 1, unit: 'ч.л.' },
+    { name: 'Ягоды', amount: 'по вкусу', unit: '' }
+  ],
+    steps: [
+      { description: 'Нагрейте воду или молоко в кастрюле.', time: 0.1 },  // 1 минута
+      { description: 'Добавьте овсянку и варите на медленном огне.', time: 300 }, // 5 минут
+      { description: 'Добавьте мед и перемешайте.', time: 10 },  // 10 сек
+      { description: 'Украсьте ягодами перед подачей.', time: 5 }  // 5 сек
+    ]
+  },
   { id: '2', name: 'Scrambled Eggs', description: 'Классический омлет, богатый белком и полезными жирами, отлично подходит для завтрака.', image: { uri: 'https://i.pinimg.com/736x/e3/a2/51/e3a251d29e5fa633eb03ed4d80839e53.jpg' } },
   { id: '3', name: 'Avocado Toast', description: 'Хрустящий тост с кремовым авокадо – идеальный источник полезных жиров и витаминов.', image: { uri: 'https://avatars.mds.yandex.net/i?id=eb782df76d716ca4b487343c8ee2c4220194062a-4321509-images-thumbs&n=13' } },
   { id: '4', name: 'Smoothie Bowl', description: 'Освежающий и питательный боул с фруктами и йогуртом, заряжающий энергией на весь день.', image: { uri: 'https://avatars.mds.yandex.net/i?id=a902a89e4f521c9c0253539323deda09_l-6357502-images-thumbs&n=13' } },
@@ -58,6 +79,7 @@ function RecipesScreen({ route }) {
             <Image source={item.image} style={styles.recipeImage} />
             <Text style={styles.recipeName}>{item.name}</Text>
           </TouchableOpacity>
+          
         )}
       />
     </View>
