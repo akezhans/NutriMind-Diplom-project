@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { useNavigation } from '@react-navigation/native'; // Импорт навигации
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, SafeAreaView } from 'react-native';
-import StepTimer from "./StepTimer"; // Таймер
+import { useNavigation } from '@react-navigation/native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, SafeAreaView, FlatList } from 'react-native';
+import StepTimer from "./StepTimer"; 
 import { Ionicons } from '@expo/vector-icons';
 
 const RecipeDetailsScreen = ({ route }) => {
   const { meal } = route.params;
-  const navigation = useNavigation(); // Хук для навигации
+  const navigation = useNavigation();
   const [servings, setServings] = useState(2);
 
-  // Функция пересчета ингредиентов
   const calculateIngredient = (amount) => {
     if (!amount || isNaN(amount)) return "—";
     return ((amount / 2) * servings).toFixed(1);
@@ -19,8 +18,8 @@ const RecipeDetailsScreen = ({ route }) => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
-         {/* Кнопка Назад */}
-         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        {/* Кнопка Назад */}
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
 
@@ -36,7 +35,7 @@ const RecipeDetailsScreen = ({ route }) => {
         <Text style={styles.title}>{meal.name}</Text>
         <Text style={styles.description}>{meal.description}</Text>
 
-        {/* Информация о времени приготовления */}
+        {/* Время приготовления */}
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>⏳ Prep: {meal.prepTime || "?"} min</Text>
           <Text style={styles.infoText}>🍳 Cook: {meal.cookTime || "?"} min</Text>
@@ -44,33 +43,22 @@ const RecipeDetailsScreen = ({ route }) => {
 
         {/* Ингредиенты */}
         <Text style={styles.sectionTitle}>🛒 Ingredients</Text>
-        <View style={styles.servingsContainer}>
-          <Text style={styles.servingsText}>Servings:</Text>
-          <TouchableOpacity 
-            onPress={() => setServings(Math.max(1, servings - 1))} 
-            style={styles.servingsButton}
-          >
-            <Text style={styles.servingsButtonText}>−</Text>
-          </TouchableOpacity>
-          <Text style={styles.servingsCount}>{servings}</Text>
-          <TouchableOpacity 
-            onPress={() => setServings(servings + 1)} 
-            style={styles.servingsButton}
-          >
-            <Text style={styles.servingsButtonText}>+</Text>
-          </TouchableOpacity>
-        </View>
+        
 
-        {/* Список ингредиентов */}
-        {meal.ingredients && meal.ingredients.length > 0 ? (
-          meal.ingredients.map((ingredient, index) => (
-            <Text key={index} style={styles.ingredientText}>
-              {ingredient.name}: {calculateIngredient(ingredient.amount)} {ingredient.unit}
-            </Text>
-          ))
-        ) : (
-          <Text style={styles.ingredientText}>No ingredients available</Text>
-        )}
+        {/* Список ингредиентов в две колонки */}
+        <View style={styles.ingredientList}>
+          {meal.ingredients && meal.ingredients.length > 0 ? (
+            meal.ingredients.map((ingredient, index) => (
+              <View key={index} style={styles.ingredientRow}>
+                <Text style={styles.ingredientName}>{ingredient.name}</Text>
+                <Text style={styles.ingredientAmount}>{calculateIngredient(ingredient.amount)} {ingredient.unit}</Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.ingredientText}>No ingredients available</Text>
+          )}
+          
+        </View>
 
         {/* Шаги приготовления */}
         <Text style={styles.sectionTitle}>👨‍🍳 Steps</Text>
@@ -99,7 +87,7 @@ const styles = StyleSheet.create({
     top: 10,
     left: 10,
     padding: 10,
-    zIndex: 10, // Поверх остальных элементов
+    zIndex: 10,
   },
 
   recipeImage: { 
@@ -158,9 +146,11 @@ const styles = StyleSheet.create({
 
   servingsButton: { 
     backgroundColor: '#4CAF50', 
-    paddingVertical: 6, 
-    paddingHorizontal: 12, 
-    borderRadius: 5, 
+    width: 36, 
+    height: 36, 
+    borderRadius: 18, 
+    alignItems: 'center', 
+    justifyContent: 'center',
     marginHorizontal: 5 
   },
 
@@ -174,10 +164,31 @@ const styles = StyleSheet.create({
     fontWeight: 'bold' 
   },
 
-  ingredientText: { 
-    fontSize: 16, 
-    color: '#333', 
-    marginBottom: 5 
+  moreButton: {
+    marginLeft: 10,
+    padding: 5,
+  },
+
+  ingredientList: {
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+    paddingTop: 10,
+  },
+
+  ingredientRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 5,
+  },
+
+  ingredientName: {
+    fontSize: 16,
+    color: '#333',
+  },
+
+  ingredientAmount: {
+    fontSize: 16,
+    color: '#666',
   },
 
   stepCard: { 

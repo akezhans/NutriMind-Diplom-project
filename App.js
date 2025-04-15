@@ -14,7 +14,7 @@ import MyProfile from './MyProfile';
 import Recipe from './Recipe';
 import Calendar from './Calendar';
 import MyProducts from './MyProducts';
-import CameraScreen from './CameraScreen';
+import AiScannerPage from './AiScannerPage';
 import Help from './Help';
 import RecipeDetailsScreen from './RecipeDetailsScreen';
 
@@ -59,7 +59,7 @@ function DrawerNavigator() {
       <Drawer.Screen name="Recipes" component={Recipe} options={{ drawerIcon: ({ color, size }) => (<Icon name="restaurant-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="Calendar" component={Calendar} options={{ drawerIcon: ({ color, size }) => (<Icon name="calendar-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="My Products" component={MyProducts} options={{ drawerIcon: ({ color, size }) => (<Icon name="cube-outline" size={size} color={color} />) }} />
-      <Drawer.Screen name="Scan AI" component={CameraScreen} options={{ drawerIcon: ({ color, size }) => (<Icon name="scan-outline" size={size} color={color} />) }} />
+      <Drawer.Screen name="Scanner" component={AiScannerPage} options={{ drawerIcon: ({ color, size }) => (<Icon name="scan-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="Help" component={Help} options={{ drawerIcon: ({ color, size }) => <Icon name="help-circle-outline" size={size} color={color} /> }} />
     </Drawer.Navigator>
   );

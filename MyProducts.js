@@ -1,79 +1,140 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, Modal, TouchableOpacity, Image } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { View, Text, TextInput, Button, Image, FlatList, TouchableOpacity, Alert, StyleSheet, Modal } from 'react-native';
 
-const categories = ['All', 'Dairy', 'Vegetables', 'Meat', 'Snacks'];
-
-const MyProducts = () => {
-  const [products, setProducts] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false);
+const MyProductsPage = () => {
+  const [products, setProducts] = useState([
+    { id: '1', name: 'Молоко', image: 'https://via.placeholder.com/100', category: 'Молочные продукты', expiryDate: '2025-04-15' },
+    { id: '2', name: 'Яблоки', image: 'https://via.placeholder.com/100', category: 'Фрукты', expiryDate: '2025-04-20' },
+    // Пример продуктов
+  ]);
+  
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentProduct, setCurrentProduct] = useState(null);
+  
   const [productName, setProductName] = useState('');
-  const [productCategory, setProductCategory] = useState('All');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [productImage, setProductImage] = useState('');
+  const [productCategory, setProductCategory] = useState('');
+  const [productExpiryDate, setProductExpiryDate] = useState('');
 
+  // Функция для добавления нового продукта
   const addProduct = () => {
-    if (productName) {
-      setProducts([...products, { name: productName, category: productCategory, expiry: expiryDate }]);
-      setModalVisible(false);
-      setProductName('');
-      setExpiryDate('');
-    }
+    const newProduct = {
+      id: String(products.length + 1),
+      name: productName,
+      image: productImage || 'https://via.placeholder.com/100',
+      category: productCategory,
+      expiryDate: productExpiryDate,
+    };
+    setProducts([...products, newProduct]);
+    setIsModalVisible(false);
+    clearForm();
   };
 
-  const filteredProducts = selectedCategory === 'All' 
-    ? products 
-    : products.filter(p => p.category === selectedCategory);
+  // Функция для редактирования продукта
+  const editProduct = (id) => {
+    const productToEdit = products.find(product => product.id === id);
+    setCurrentProduct(productToEdit);
+    setProductName(productToEdit.name);
+    setProductImage(productToEdit.image);
+    setProductCategory(productToEdit.category);
+    setProductExpiryDate(productToEdit.expiryDate);
+    setIsEditing(true);
+    setIsModalVisible(true);
+  };
+
+  // Функция для сохранения изменений продукта
+  const saveProductChanges = () => {
+    const updatedProducts = products.map(product => {
+      if (product.id === currentProduct.id) {
+        return {
+          ...product,
+          name: productName,
+          image: productImage,
+          category: productCategory,
+          expiryDate: productExpiryDate,
+        };
+      }
+      return product;
+    });
+    setProducts(updatedProducts);
+    setIsModalVisible(false);
+    setIsEditing(false);
+    clearForm();
+  };
+
+  // Очистка формы
+  const clearForm = () => {
+    setProductName('');
+    setProductImage('');
+    setProductCategory('');
+    setProductExpiryDate('');
+  };
+
+  // Функция для удаления продукта
+  const deleteProduct = (id) => {
+    setProducts(products.filter(product => product.id !== id));
+    Alert.alert('Удалено', 'Продукт был удален');
+  };
 
   return (
-    <View style={{ padding: 20 }}>
-      <Text style={{ fontSize: 24, fontWeight: 'bold' }}>My Products</Text>
-      <Text>Manage your products and track expiry dates.</Text>
-      
-      {/* Category Filter */}
-      <View style={{ flexDirection: 'row', marginVertical: 10 }}>
-        {categories.map((cat) => (
-          <TouchableOpacity key={cat} onPress={() => setSelectedCategory(cat)} style={{ marginRight: 10 }}>
-            <Text style={{ color: selectedCategory === cat ? 'blue' : 'black' }}>{cat}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      
-      {/* Product List */}
+    <View style={styles.container}>
+      <Text style={styles.title}>Мои продукты</Text>
+      <Text style={styles.subtitle}>Добавьте или отредактируйте продукты в вашем списке</Text>
+      <Button title="Добавить продукт" onPress={() => setIsModalVisible(true)} />
+
       <FlatList
-        data={filteredProducts}
-        keyExtractor={(item, index) => index.toString()}
+        data={products}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 10, borderBottomWidth: 1 }}>
-            <Text>{item.name} ({item.category})</Text>
-            <Text style={{ color: 'red' }}>Expiry: {item.expiry || 'N/A'}</Text>
+          <View style={styles.mealItem}>
+            <Image source={{ uri: item.image }} style={styles.mealImage} />
+            <View style={styles.mealDetails}>
+              <Text style={styles.mealName}>{item.name}</Text>
+              <Text style={styles.mealInfo}>Категория: {item.category}</Text>
+              <Text style={styles.mealInfo}>Срок годности: {item.expiryDate}</Text>
+            </View>
+            <View style={styles.productActions}>
+              <Button title="Редактировать" onPress={() => editProduct(item.id)} />
+              <Button title="Удалить" onPress={() => deleteProduct(item.id)} color="red" />
+            </View>
           </View>
         )}
       />
-      
-      {/* Add Product Button */}
-      <TouchableOpacity onPress={() => setModalVisible(true)} style={{ backgroundColor: 'green', padding: 10, marginTop: 20 }}>
-        <Text style={{ color: 'white', textAlign: 'center' }}>+ Add Product</Text>
-      </TouchableOpacity>
-      
-      {/* Add Product Modal */}
-      <Modal visible={modalVisible} animationType="slide">
-        <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 20, fontWeight: 'bold' }}>Add Product</Text>
-          <TextInput placeholder="Product Name" value={productName} onChangeText={setProductName} style={{ borderWidth: 1, marginVertical: 10, padding: 5 }} />
-          <TextInput placeholder="Expiry Date (YYYY-MM-DD)" value={expiryDate} onChangeText={setExpiryDate} style={{ borderWidth: 1, marginVertical: 10, padding: 5 }} />
-          
-          {/* Category Selection */}
-          <Text>Category:</Text>
-          {categories.filter(c => c !== 'All').map((cat) => (
-            <TouchableOpacity key={cat} onPress={() => setProductCategory(cat)}>
-              <Text style={{ color: productCategory === cat ? 'blue' : 'black' }}>{cat}</Text>
-            </TouchableOpacity>
-          ))}
-          
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
-            <Button title="Cancel" onPress={() => setModalVisible(false)} color="red" />
-            <Button title="Save" onPress={addProduct} />
+
+      {/* Модальное окно для добавления/редактирования продуктов */}
+      <Modal visible={isModalVisible} animationType="slide" onRequestClose={() => setIsModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modal}>
+            <Text style={styles.modalTitle}>{isEditing ? 'Редактировать продукт' : 'Добавить продукт'}</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Название продукта"
+              value={productName}
+              onChangeText={setProductName}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Ссылка на изображение"
+              value={productImage}
+              onChangeText={setProductImage}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Категория"
+              value={productCategory}
+              onChangeText={setProductCategory}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Срок годности (например, 2025-04-15)"
+              value={productExpiryDate}
+              onChangeText={setProductExpiryDate}
+            />
+            <View style={styles.modalButtons}>
+              <Button title={isEditing ? 'Сохранить изменения' : 'Добавить'} onPress={isEditing ? saveProductChanges : addProduct} />
+              <Button title="Отмена" onPress={() => setIsModalVisible(false)} color="gray" />
+            </View>
           </View>
         </View>
       </Modal>
@@ -81,4 +142,92 @@ const MyProducts = () => {
   );
 };
 
-export default MyProducts;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FCFCFC',
+    padding: 20,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginTop: 40,
+    marginBottom: 5,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 20,
+  },
+  mealItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    height: 70,
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  mealImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  mealDetails: {
+    flex: 1,
+  },
+  mealName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  mealInfo: {
+    fontSize: 12,
+    color: '#888',
+  },
+  productActions: {
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Затемнённый фон
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modal: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    width: 300,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  input: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+});
+
+export default MyProductsPage;
