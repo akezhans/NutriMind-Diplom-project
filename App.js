@@ -9,6 +9,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import Welcome from './Welcome';
 import Login from './Login';
 import SignUp from './SignUp';
+import Main from './MainPage'
 import HomeScreen from './HomeScreen';
 import MyProfile from './MyProfile';
 import Recipe from './Recipe';
@@ -31,12 +32,15 @@ export default function App() {
   );
 }
 
-// **Стек для авторизации**
+// Экран для авторизации
 function AuthStack({ setIsAuthenticated }) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Welcome">{(props) => <Welcome {...props} setIsAuthenticated={setIsAuthenticated} />}</Stack.Screen>
-      <Stack.Screen name="Login">{(props) => <Login {...props} setIsAuthenticated={setIsAuthenticated} />}</Stack.Screen>
+      
+      <Stack.Screen name="Welcome" component={Welcome} />
+      <Stack.Screen name="Login">
+        {(props) => <Login {...props} setIsAuthenticated={setIsAuthenticated} />}
+      </Stack.Screen>
       <Stack.Screen name="SignUp" component={SignUp} />
     </Stack.Navigator>
   );
@@ -54,7 +58,8 @@ function DrawerNavigator() {
         drawerStyle: { backgroundColor: '#FCFCFC', width: 256 },
       }}
     >
-      <Drawer.Screen name="Dashboard" component={HomeScreen} options={{ drawerIcon: ({ color, size }) => (<Icon name="home-outline" size={size} color={color} />) }} />
+      <Drawer.Screen name="Main" component={Main} options={{ drawerIcon: ({ color, size }) => (<Icon name="home-outline" size={size} color={color} />) }} />
+      <Drawer.Screen name="Plan" component={HomeScreen} options={{ drawerIcon: ({ color, size }) => (<Icon name="list-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="My Profile" component={MyProfile} options={{ drawerIcon: ({ color, size }) => (<Icon name="person-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="Recipes" component={Recipe} options={{ drawerIcon: ({ color, size }) => (<Icon name="restaurant-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="Calendar" component={Calendar} options={{ drawerIcon: ({ color, size }) => (<Icon name="calendar-outline" size={size} color={color} />) }} />
