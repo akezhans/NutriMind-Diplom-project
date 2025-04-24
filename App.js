@@ -9,7 +9,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import Welcome from './Welcome';
 import Login from './Login';
 import SignUp from './SignUp';
-import Main from './MainPage'
+import Main from './Main';
 import HomeScreen from './HomeScreen';
 import MyProfile from './MyProfile';
 import Recipe from './Recipe';
@@ -32,11 +32,10 @@ export default function App() {
   );
 }
 
-// Экран для авторизации
+// Стек для авторизации
 function AuthStack({ setIsAuthenticated }) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      
       <Stack.Screen name="Welcome" component={Welcome} />
       <Stack.Screen name="Login">
         {(props) => <Login {...props} setIsAuthenticated={setIsAuthenticated} />}
@@ -46,7 +45,7 @@ function AuthStack({ setIsAuthenticated }) {
   );
 }
 
-// **Drawer (боковое меню)**
+// Главное меню (Drawer)
 function DrawerNavigator() {
   return (
     <Drawer.Navigator
@@ -58,32 +57,29 @@ function DrawerNavigator() {
         drawerStyle: { backgroundColor: '#FCFCFC', width: 256 },
       }}
     >
-      <Drawer.Screen name="Main" component={Main} options={{ drawerIcon: ({ color, size }) => (<Icon name="home-outline" size={size} color={color} />) }} />
+      <Drawer.Screen name="Dashboard" component={Main} options={{ drawerIcon: ({ color, size }) => (<Icon name="home-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="Plan" component={HomeScreen} options={{ drawerIcon: ({ color, size }) => (<Icon name="list-outline" size={size} color={color} />) }} />
-      <Drawer.Screen name="My Profile" component={MyProfile} options={{ drawerIcon: ({ color, size }) => (<Icon name="person-outline" size={size} color={color} />) }} />
+      <Drawer.Screen name="MyProfile" component={MyProfile} options={{ drawerIcon: ({ color, size }) => (<Icon name="person-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="Recipes" component={Recipe} options={{ drawerIcon: ({ color, size }) => (<Icon name="restaurant-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="Calendar" component={Calendar} options={{ drawerIcon: ({ color, size }) => (<Icon name="calendar-outline" size={size} color={color} />) }} />
-      <Drawer.Screen name="My Products" component={MyProducts} options={{ drawerIcon: ({ color, size }) => (<Icon name="cube-outline" size={size} color={color} />) }} />
+      <Drawer.Screen name="MyProducts" component={MyProducts} options={{ drawerIcon: ({ color, size }) => (<Icon name="cube-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="Scanner" component={AiScannerPage} options={{ drawerIcon: ({ color, size }) => (<Icon name="scan-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="Help" component={Help} options={{ drawerIcon: ({ color, size }) => <Icon name="help-circle-outline" size={size} color={color} /> }} />
     </Drawer.Navigator>
   );
 }
 
-// **Главный стек с Drawer + RecipeDetails**
+// Главный стек с Drawer + RecipeDetails
 function AppStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {/* Боковое меню */}
-      <Stack.Screen name="Main" component={DrawerNavigator} />
-
-      {/* Вложенный экран рецепта */}
+      <Stack.Screen name="Root" component={DrawerNavigator} />
       <Stack.Screen name="RecipeDetails" component={RecipeDetailsScreen} />
     </Stack.Navigator>
   );
 }
 
-// **Кастомное боковое меню**
+// Кастомное боковое меню
 function CustomDrawerContent(props) {
   return (
     <DrawerContentScrollView {...props}>
@@ -103,7 +99,7 @@ function CustomDrawerContent(props) {
   );
 }
 
-// **Стили**
+// Стили
 const styles = StyleSheet.create({
   profileSection: {
     alignItems: 'center',

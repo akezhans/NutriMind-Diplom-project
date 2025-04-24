@@ -85,7 +85,7 @@ const AiScannerPage = () => {
     });
   
     try {
-      const response = await axios.post('http://192.168.0.109:8080/analyze-product', formData, {
+      const response = await axios.post('http://10.48.166.22:8080/analyze-product', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

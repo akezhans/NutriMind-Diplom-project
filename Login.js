@@ -11,7 +11,7 @@ const Login = ({ setIsAuthenticated }) => {
   const [password, setPassword] = useState('');
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
-  const BASE_URL = 'http://172.20.10.2:8080'; // Замени на свой актуальный IP
+  const BASE_URL = 'http://192.168.0.109:8080'; // Замени на свой актуальный IP
 
   useEffect(() => {
     async function loadFonts() {
@@ -23,28 +23,46 @@ const Login = ({ setIsAuthenticated }) => {
       setFontsLoaded(true);
     }
     loadFonts();
+
+    // Проверка, есть ли токен в AsyncStorage
+    const checkToken = async () => {
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        setIsAuthenticated(true);
+      }
+    };
+    checkToken();
   }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please enter email and password");
+      Alert.alert("Ошибка", "Введите email и пароль");
       return;
     }
-
+  
     try {
-      const response = await axios.post(`${BASE_URL}/signin`, { email, password });
-
+      const response = await axios.post(`${BASE_URL}/signin`, {
+        email,
+        password,
+      });
+  
+      console.log("Ответ от сервера:", response.data);
+  
       if (response.data && response.data.message === "Login successful") {
-        console.log("Login successful:", response.data);
+        // Если тебе всё же понадобится токен в будущем, можно сохранить что-то вроде флага:
+        await AsyncStorage.setItem('isAuthenticated', 'true');
         setIsAuthenticated(true);
       } else {
-        Alert.alert("Login failed", response.data.message || "Unknown error");
-      }      
+        Alert.alert("Ошибка", response.data.message || "Неизвестная ошибка");
+      }
     } catch (error) {
       console.error("Login error:", error);
-      Alert.alert("Login failed", "Invalid email or password");
+      Alert.alert("Ошибка", "Неверный email или пароль");
     }
   };
+  
+  
+  
 
   if (!fontsLoaded) return null;
 

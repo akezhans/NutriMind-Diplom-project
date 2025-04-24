@@ -1,76 +1,142 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
-import { Dimensions } from 'react-native';
-
-const screenWidth = Dimensions.get('window').width;
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import axios from 'axios';
 
 export default function MyProfile() {
-  const [weight, setWeight] = useState('');
-  const [weightHistory, setWeightHistory] = useState([65, 66, 66.5, 67, 66.8, 66, 66.9]);
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleAddWeight = () => {
-    if (weight) {
-      setWeightHistory([...weightHistory, parseFloat(weight)]);
-      setWeight('');
-    }
-  };
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await axios.get('http://192.168.0.109:8080/profile');
+        setUserData(response.data);
+      } catch (error) {
+        console.error('Ошибка при получении профиля:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#5A67D8" />
+      </View>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <View style={styles.center}>
+        <Text>Не удалось загрузить данные профиля.</Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>My Profile</Text>
-      <Text style={styles.subtitle}>Track your weight and monitor progress over time.</Text>
-
-      <View style={styles.profileSection}>
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.profileHeader}>
         <Image source={require('./assets/NMava.jpg')} style={styles.avatar} />
-        <View>
-          <Text style={styles.userName}>Akezhan Sailaubekov</Text>
-          <Text style={styles.userEmail}>sajlaubekovakezhan@gmail.com</Text>
+        <Text style={styles.name}>{userData.name}</Text>
+        <Text style={styles.role}>{userData.role || 'Пользователь'}</Text>
+      </View>
+
+      <View style={styles.infoSection}>
+        <Text style={styles.sectionTitle}>Личная информация</Text>
+        <View style={styles.infoRow}>
+          <Text style={styles.label}>Email:</Text>
+          <Text style={styles.value}>{userData.email}</Text>
         </View>
-        <TouchableOpacity style={styles.editButton}><Text style={styles.editText}>Edit</Text></TouchableOpacity>
+        {userData.city && (
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Город:</Text>
+            <Text style={styles.value}>{userData.city}</Text>
+          </View>
+        )}
+        {userData.age && (
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Возраст:</Text>
+            <Text style={styles.value}>{userData.age}</Text>
+          </View>
+        )}
       </View>
 
-      <View style={styles.inputSection}>
-        <Text>Enter Your Weight (kg):</Text>
-        <TextInput style={styles.input} keyboardType='numeric' value={weight} onChangeText={setWeight} />
-        <Button title="Add Weight" onPress={handleAddWeight} />
+      <View style={styles.aboutSection}>
+        <Text style={styles.sectionTitle}>О себе</Text>
+        <Text style={styles.aboutText}>
+          {userData.about || 'Информация отсутствует.'}
+        </Text>
       </View>
-
-      <Text style={styles.graphTitle}>Weight Progress</Text>
-      <LineChart
-        data={{
-          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-          datasets: [{ data: weightHistory }],
-        }}
-        width={screenWidth - 20}
-        height={220}
-        yAxisSuffix="kg"
-        chartConfig={{
-          backgroundColor: '#f1f1f1',
-          backgroundGradientFrom: '#fff',
-          backgroundGradientTo: '#fff',
-          decimalPlaces: 1,
-          color: (opacity = 1) => `rgba(134, 65, 244, ${opacity})`,
-        }}
-        bezier
-        style={styles.chart}
-      />
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: 'bold' },
-  subtitle: { fontSize: 14, fontStyle: 'italic', color: 'gray' },
-  profileSection: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
-  avatar: { width: 60, height: 60, borderRadius: 40, marginRight: 10 },
-  userName: { fontSize: 18, fontWeight: 'bold' },
-  userEmail: { fontSize: 14, color: 'gray' },
-  editButton: { backgroundColor: '#007bff', padding: 8, borderRadius: 5, marginLeft: 'auto' },
-  editText: { color: '#fff' },
-  inputSection: { marginBottom: 20 },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 8, marginVertical: 10, borderRadius: 5 },
-  graphTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-  chart: { borderRadius: 10 },
+  container: {
+    padding: 20,
+    backgroundColor: '#fff',
+    flexGrow: 1,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileHeader: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 10,
+  },
+  name: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  role: {
+    fontSize: 16,
+    color: 'gray',
+  },
+  infoSection: {
+    marginBottom: 30,
+    backgroundColor: '#F8F8F8',
+    padding: 15,
+    borderRadius: 10,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#2D3748',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  label: {
+    fontWeight: '600',
+    width: 100,
+    color: '#4A5568',
+  },
+  value: {
+    color: '#2D3748',
+  },
+  aboutSection: {
+    backgroundColor: '#F8F8F8',
+    padding: 15,
+    borderRadius: 10,
+  },
+  aboutText: {
+    color: '#2D3748',
+    fontSize: 15,
+    lineHeight: 22,
+  },
 });

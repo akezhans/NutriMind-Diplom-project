@@ -74,7 +74,7 @@ function RecipesScreen({ route }) {
             style={styles.recipeCard}
             onPress={() => {
               addMeal(item);
-              navigation.goBack();
+              navigation.navigate('Plan');
             }}>
             <Image source={item.image} style={styles.recipeImage} />
             <Text style={styles.recipeName}>{item.name}</Text>
