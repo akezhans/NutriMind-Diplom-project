@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import * as Font from 'expo-font';
 import axios from 'axios';
 import { Image } from 'react-native';
+import { API_BASE_URL } from './config';
 
 const SignUp = () => {
   const navigation = useNavigation();
@@ -15,9 +16,9 @@ const SignUp = () => {
   useEffect(() => {
     async function loadFonts() {
       await Font.loadAsync({
-        'Italiana': require('../NutriMind/assets/fonts/Italiana-Regular.ttf'),
-        'Montserrat-Bold': require('../NutriMind/assets/fonts/Montserrat-Bold.ttf'),
-        'Montserrat-Medium': require('../NutriMind/assets/fonts/Montserrat-Medium.ttf')
+        // 'Italiana': require('../NutriMind/assets/fonts/Italiana-Regular.ttf'),
+        // 'Montserrat-Bold': require('../NutriMind/assets/fonts/Montserrat-Bold.ttf'),
+        // 'Montserrat-Medium': require('../NutriMind/assets/fonts/Montserrat-Medium.ttf')
       });
       setFontsLoaded(true);
     }
@@ -35,7 +36,7 @@ const SignUp = () => {
     }
 
     try {
-      const response = await axios.post('http://10.48.166.22:8080/signup', {
+      const response = await axios.post(`${API_BASE_URL}/signup`, {
         fullName,
         email,
         password

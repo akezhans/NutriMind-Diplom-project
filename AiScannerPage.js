@@ -3,6 +3,7 @@ import axios from 'axios';
 import { View, Text, Button, Image, ActivityIndicator, Alert, ScrollView, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
+import { API_BASE_URL } from './config';
 
 const AiScannerPage = () => {
   const navigation = useNavigation();
@@ -85,7 +86,7 @@ const AiScannerPage = () => {
     });
   
     try {
-      const response = await axios.post('http://10.48.166.22:8080/analyze-product', formData, {
+      const response = await axios.post(`${API_BASE_URL}/analyze-product`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

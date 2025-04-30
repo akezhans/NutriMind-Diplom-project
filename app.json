@@ -4,7 +4,7 @@
     "slug": "NutriMind",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/NMicon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -33,7 +33,15 @@
     },
     "plugins": [
       "expo-barcode-scanner",
-      "expo-font"
-    ]
+      "expo-font",
+      "expo-secure-store"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "03e6b137-e99c-48a2-9393-14c612cb69d0"
+      },
+      "apiBaseUrl": "http://192.168.0.109:8080"
+    },
+    "owner": "akezhaans"
   }
 }

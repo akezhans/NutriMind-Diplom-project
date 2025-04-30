@@ -4,6 +4,8 @@ import { useNavigation } from '@react-navigation/native';
 import * as Font from 'expo-font';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
+import { API_BASE_URL } from './config';
 
 const Login = ({ setIsAuthenticated }) => {
   const navigation = useNavigation();
@@ -11,14 +13,12 @@ const Login = ({ setIsAuthenticated }) => {
   const [password, setPassword] = useState('');
   const [fontsLoaded, setFontsLoaded] = useState(false);
 
-  const BASE_URL = 'http://192.168.0.109:8080'; // Замени на свой актуальный IP
-
   useEffect(() => {
     async function loadFonts() {
       await Font.loadAsync({
-        'Italiana': require('../NutriMind/assets/fonts/Italiana-Regular.ttf'),
-        'Montserrat-Bold': require('../NutriMind/assets/fonts/Montserrat-Bold.ttf'),
-        'Montserrat-Medium': require('../NutriMind/assets/fonts/Montserrat-Medium.ttf')
+        // 'Italiana': require('../NutriMind/assets/fonts/Italiana-Regular.ttf'),
+        // 'Montserrat-Bold': require('../NutriMind/assets/fonts/Montserrat-Bold.ttf'),
+        // 'Montserrat-Medium': require('../NutriMind/assets/fonts/Montserrat-Medium.ttf')
       });
       setFontsLoaded(true);
     }
@@ -26,7 +26,7 @@ const Login = ({ setIsAuthenticated }) => {
 
     // Проверка, есть ли токен в AsyncStorage
     const checkToken = async () => {
-      const token = await AsyncStorage.getItem('token');
+      const token = await SecureStore.getItemAsync('token'); // Используем SecureStore
       if (token) {
         setIsAuthenticated(true);
       }
@@ -41,15 +41,28 @@ const Login = ({ setIsAuthenticated }) => {
     }
   
     try {
-      const response = await axios.post(`${BASE_URL}/signin`, {
+      const response = await axios.post(`${API_BASE_URL}/signin`, {
         email,
         password,
+      }, {
+        withCredentials: true  // <-- ВАЖНО!
       });
   
-      console.log("Ответ от сервера:", response.data);
+      console.log("Ответ от сервера:", response.data);  // Логируем ответ
   
       if (response.data && response.data.message === "Login successful") {
-        // Если тебе всё же понадобится токен в будущем, можно сохранить что-то вроде флага:
+        let token = response.data.token;
+  
+        // Преобразуем токен в строку, если это не строка
+        if (typeof token !== 'string') {
+          token = String(token);  // Преобразуем токен в строку
+        }
+  
+        console.log("Токен перед сохранением:", token); // Логируем токен перед сохранением
+  
+        await SecureStore.setItemAsync('token', token); // Сохраняем как строку
+  
+        // Сохранение информации о пользователе в AsyncStorage (если необходимо)
         await AsyncStorage.setItem('isAuthenticated', 'true');
         setIsAuthenticated(true);
       } else {
@@ -63,7 +76,6 @@ const Login = ({ setIsAuthenticated }) => {
   
   
   
-
   if (!fontsLoaded) return null;
 
   return (
