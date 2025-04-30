@@ -13,9 +13,9 @@ const Welcome = () => {
   useEffect(() => {
     async function loadFonts() {
       await Font.loadAsync({
-        'Italiana': require('../NutriMind/assets/fonts/Italiana-Regular.ttf'),
-        'Montserrat-Bold': require('../NutriMind/assets/fonts/Montserrat-Bold.ttf'),
-        'Montserrat-Medium': require('../NutriMind/assets/fonts/Montserrat-Medium.ttf')
+        // 'Italiana': require('../NutriMind/assets/fonts/Italiana-Regular.ttf'),
+        // 'Montserrat-Bold': require('../NutriMind/assets/fonts/Montserrat-Bold.ttf'),
+        // 'Montserrat-Medium': require('../NutriMind/assets/fonts/Montserrat-Medium.ttf')
       });
       setFontsLoaded(true);
     }
