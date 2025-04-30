@@ -16,9 +16,9 @@ const SignUp = () => {
   useEffect(() => {
     async function loadFonts() {
       await Font.loadAsync({
-        // 'Italiana': require('../NutriMind/assets/fonts/Italiana-Regular.ttf'),
-        // 'Montserrat-Bold': require('../NutriMind/assets/fonts/Montserrat-Bold.ttf'),
-        // 'Montserrat-Medium': require('../NutriMind/assets/fonts/Montserrat-Medium.ttf')
+        'Italiana': require('./assets/fonts/Italiana-Regular.ttf'),
+        'Montserrat-Bold': require('./assets/fonts/Montserrat-Bold.ttf'),
+        'Montserrat-Medium': require('./assets/fonts/Montserrat-Medium.ttf')
       });
       setFontsLoaded(true);
     }
@@ -54,11 +54,11 @@ const SignUp = () => {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <ImageBackground 
-        source={require('../NutriMind/assets/NMfon3.jpg')} 
+        source={require('./assets/NMfon3.jpg')} 
         style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}
       >
         <TouchableOpacity onPress={() => navigation.goBack()} style={{ position: 'absolute', top: 40, left: 20 }}>
-          <Image source={require('../NutriMind/assets/Back.png')} style={{ width: 24, height: 24 }} />
+          <Image source={require('./assets/Back.png')} style={{ width: 24, height: 24 }} />
         </TouchableOpacity>
 
         <Text style={{ fontSize: 40, color: '#6CBA69', marginBottom: 80, marginTop: 110, fontFamily: 'Montserrat-Bold' }}>
@@ -105,11 +105,11 @@ const SignUp = () => {
 
         <View style={{ flexDirection: 'row', marginBottom: 10 }}>
           <TouchableOpacity style={{ marginHorizontal: 30 }}>
-            <Image source={require('../NutriMind/assets/Google.png')} style={{ width: 32, height: 32 }} />
+            <Image source={require('./assets/Google.png')} style={{ width: 32, height: 32 }} />
           </TouchableOpacity>
 
           <TouchableOpacity style={{ marginHorizontal: 30 }}>
-            <Image source={require('../NutriMind/assets/facebook.png')} style={{ width: 32, height: 32 }} />
+            <Image source={require('./assets/facebook.png')} style={{ width: 32, height: 32 }} />
           </TouchableOpacity>
         </View>
       </ImageBackground>

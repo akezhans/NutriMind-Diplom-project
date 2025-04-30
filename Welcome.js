@@ -13,9 +13,9 @@ const Welcome = () => {
   useEffect(() => {
     async function loadFonts() {
       await Font.loadAsync({
-        // 'Italiana': require('../NutriMind/assets/fonts/Italiana-Regular.ttf'),
-        // 'Montserrat-Bold': require('../NutriMind/assets/fonts/Montserrat-Bold.ttf'),
-        // 'Montserrat-Medium': require('../NutriMind/assets/fonts/Montserrat-Medium.ttf')
+        'Italiana': require('./assets/fonts/Italiana-Regular.ttf'),
+        'Montserrat-Bold': require('./assets/fonts/Montserrat-Bold.ttf'),
+        'Montserrat-Medium': require('./assets/fonts/Montserrat-Medium.ttf')
       });
       setFontsLoaded(true);
     }
@@ -28,7 +28,7 @@ const Welcome = () => {
 
   return (
     <ImageBackground 
-      source={require('../NutriMind/assets/NMfon3.jpg')} 
+      source={require('./assets/NMfon3.jpg')} 
       style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}
     >
       <Text style={{ fontSize: 40, color: '#5D9C5B', marginBottom: 90, marginTop: 110, fontFamily: 'Montserrat-Bold' }}>
@@ -57,11 +57,11 @@ const Welcome = () => {
       
       <View style={{ flexDirection: 'row', marginBottom: 10 }}>
       <TouchableOpacity style={{ marginHorizontal: 30 }}>
-  <Image source={require('../NutriMind/assets/Google.png')} style={{ width: 32, height: 32 }} />
+  <Image source={require('./assets/Google.png')} style={{ width: 32, height: 32 }} />
 </TouchableOpacity>
 
 <TouchableOpacity style={{ marginHorizontal: 30 }}>
-  <Image source={require('../NutriMind/assets/facebook.png')} style={{ width: 32, height: 32 }} />
+  <Image source={require('./assets/facebook.png')} style={{ width: 32, height: 32 }} />
 </TouchableOpacity>
       </View>
     </ImageBackground>
