@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { TouchableWithoutFeedback, Keyboard } from 'react-native';
-import MealModal from '../NutriMind/MealModal';
+import MealModal from './MealModal';
 
 // Функция для получения текущей недели
 const getCurrentWeek = () => {
