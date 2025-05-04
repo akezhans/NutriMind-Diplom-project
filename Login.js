@@ -5,7 +5,9 @@ import * as Font from 'expo-font';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
-import { API_BASE_URL } from './config';
+import Constants from 'expo-constants';
+
+export const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL;
 
 const Login = ({ setIsAuthenticated }) => {
   const navigation = useNavigation();
@@ -36,43 +38,33 @@ const Login = ({ setIsAuthenticated }) => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert("Ошибка", "Введите email и пароль");
+      Alert.alert("Error", "Please fill all fields");
       return;
     }
   
     try {
-      const response = await axios.post(`${API_BASE_URL}/signin`, {
+      const response = await axios.post(`${API_BASE_URL}/signinjwt`, {
         email,
-        password,
-      }, {
-        withCredentials: true  // <-- ВАЖНО!
+        password
       });
   
-      console.log("Ответ от сервера:", response.data);  // Логируем ответ
-  
-      if (response.data && response.data.message === "Login successful") {
+      if (response.data && response.data.token) {
         let token = response.data.token;
-  
-        // Преобразуем токен в строку, если это не строка
         if (typeof token !== 'string') {
-          token = String(token);  // Преобразуем токен в строку
+          token = String(token);
         }
   
-        console.log("Токен перед сохранением:", token); // Логируем токен перед сохранением
-  
-        await SecureStore.setItemAsync('token', token); // Сохраняем как строку
-  
-        // Сохранение информации о пользователе в AsyncStorage (если необходимо)
-        await AsyncStorage.setItem('isAuthenticated', 'true');
+        await SecureStore.setItemAsync('token', token);
         setIsAuthenticated(true);
-      } else {
-        Alert.alert("Ошибка", response.data.message || "Неизвестная ошибка");
+      }else {
+        Alert.alert('Error', 'No token received');
       }
     } catch (error) {
-      console.error("Login error:", error);
-      Alert.alert("Ошибка", "Неверный email или пароль");
+      console.error('Error during sign up:', error.response?.data?.error || error.message);
+      Alert.alert('Error', error.response?.data?.error || 'Something went wrong');
     }
   };
+  
   
   
   

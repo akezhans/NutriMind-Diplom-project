@@ -4,11 +4,11 @@
     "slug": "NutriMind",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/NMicon.png",
+    "icon": "./assets/NewLogo5.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -20,8 +20,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "##00FF00"
+        "foregroundImage": "./assets/logo.png",
+        "backgroundColor": "#ffffff"
       },
       "permissions": [
         "android.permission.CAMERA"
@@ -29,7 +29,7 @@
       "package": "com.nutrimind.app"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/logo.png"
     },
     "plugins": [
       "expo-barcode-scanner",
@@ -40,7 +40,7 @@
       "eas": {
         "projectId": "03e6b137-e99c-48a2-9393-14c612cb69d0"
       },
-      "API_BASE_URL": "http://172.20.10.2:8080"
+      "API_BASE_URL": "https://back-c6rh.onrender.com"
     },
     "owner": "akezhaans"
   }

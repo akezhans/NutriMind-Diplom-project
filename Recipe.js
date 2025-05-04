@@ -1,106 +1,318 @@
-import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import {
+  View, Text, TextInput, Button, FlatList, Image, StyleSheet,
+  TouchableOpacity, Modal, SafeAreaView, ScrollView
+} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
+import * as SecureStore from 'expo-secure-store';
 
+export const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL;
 
-const recipes = [
-  // Завтрак
-  {
-    id: '1',
-    name: 'Oatmeal',
-    description: 'Полезная и питательная овсянка для идеального начала дня.',
-    image: { uri: 'https://avatars.mds.yandex.net/i?id=f2a89966b2b64c4afafb0447abc53543cb472936-4872083-images-thumbs&n=13' },
-    ingredients: ['1 стакан овсянки', '2 стакана воды или молока', '1 ч.л. меда', 'Ягоды по вкусу'],
-    prepTime: 5, // Время подготовки (например, 5 минут)
-  cookTime: 10, // Время приготовления (например, 10 минут)
-  ingredients: [
-    { name: 'Овсянка', amount: 1, unit: 'стакан' },
-    { name: 'Вода или молоко', amount: 2, unit: 'стакана' },
-    { name: 'Мёд', amount: 1, unit: 'ч.л.' },
-    { name: 'Ягоды', amount: 'по вкусу', unit: '' }
-  ],
-    steps: [
-      { description: 'Нагрейте воду или молоко в кастрюле.', time: 0.1 },  // 1 минута
-      { description: 'Добавьте овсянку и варите на медленном огне.', time: 300 }, // 5 минут
-      { description: 'Добавьте мед и перемешайте.', time: 10 },  // 10 сек
-      { description: 'Украсьте ягодами перед подачей.', time: 5 }  // 5 сек
-    ]
-  },
-  { id: '2', name: 'Scrambled Eggs', description: 'Классический омлет, богатый белком и полезными жирами, отлично подходит для завтрака.', image: { uri: 'https://i.pinimg.com/736x/e3/a2/51/e3a251d29e5fa633eb03ed4d80839e53.jpg' } },
-  { id: '3', name: 'Avocado Toast', description: 'Хрустящий тост с кремовым авокадо – идеальный источник полезных жиров и витаминов.', image: { uri: 'https://avatars.mds.yandex.net/i?id=eb782df76d716ca4b487343c8ee2c4220194062a-4321509-images-thumbs&n=13' } },
-  { id: '4', name: 'Smoothie Bowl', description: 'Освежающий и питательный боул с фруктами и йогуртом, заряжающий энергией на весь день.', image: { uri: 'https://avatars.mds.yandex.net/i?id=a902a89e4f521c9c0253539323deda09_l-6357502-images-thumbs&n=13' } },
-  { id: '5', name: 'Pancakes with Honey', description: 'Нежные блинчики с медом – вкусный и полезный вариант для сладкого завтрака.', image: { uri: 'https://mir-s3-cdn-cf.behance.net/project_modules/2800_opt_1/3d49c8161057127.63bedab849330.png' } },
+export default function RecipeScreen() {
+  const [recipes, setRecipes] = useState([]);
+  const [tab, setTab] = useState('all'); // 'all' | 'mine' | 'favorites'
+  const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Обед
-  { id: '6', name: 'Beshbarmak', description: 'Традиционное казахское блюдо из лапши и мяса, символ гостеприимства и домашнего уюта.', image: { uri: 'https://pic.rutubelist.ru/video/6c/2d/6c2db2f59a5a6035ed6a8d40a7c3f53b.jpg' } },
-  { id: '7', name: 'Caesar Salad', description: 'Легкий салат с курицей, хрустящими сухариками и пикантным соусом.', image: { uri: 'https://avatars.mds.yandex.net/i?id=fb28a3b94b866986e698193c9048da4a_l-4234038-images-thumbs&n=13' } },
-  { id: '8', name: 'Spaghetti Bolognese', description: 'Классическая паста с насыщенным мясным соусом Болоньезе.', image: { uri: 'https://avatars.mds.yandex.net/i?id=c9f093ee8887a24d89c17873fdd3e370_l-5210586-images-thumbs&n=13' } },
-  { id: '9', name: 'Chicken Soup', description: 'Ароматный куриный суп, согревающий и улучшающий самочувствие.', image: { uri: 'https://s.yimg.com/ny/api/res/1.2/KJWDHGu3vq3CEQBf44olTw--/YXBwaWQ9aGlnaGxhbmRlcjt3PTk2MDtoPTUyMg--/https://media.zenfs.com/en/southern_living_806/a8838470e8ce4c671e4b8500a3d49113' } },
-  { id: '10', name: 'Pizza Margherita', description: 'Классическая итальянская пицца с томатами, моцареллой и базиликом.', image: { uri: 'https://eda.yandex/images/3781088/63c75c8d766ec65977a03abb225425bf-1100x825.jpg' } },
+  // Recipe form states
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [ingredients, setIngredients] = useState('');
+  const [steps, setSteps] = useState('');
+  const [image, setImage] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Ужин
-  { id: '11', name: 'Sushi', description: 'Японские суши с рисом, свежей рыбой и водорослями нори.', image: { uri: 'https://static.tildacdn.com/tild3031-6361-4561-a139-336136643637/422212481894599_a283.png' } },
-  { id: '12', name: 'Burger', description: 'Сочный бургер с говяжьей котлетой, сыром и свежими овощами.', image: { uri: 'https://avatars.mds.yandex.net/get-altay/2816622/2a0000017517e31a126712150d54595b9c52/XXL_height' } },
-  { id: '13', name: 'Steak', description: 'Идеально прожаренный стейк с насыщенным мясным вкусом.', image: { uri: 'https://eda.yandex/images/2750126/d5f1a49b2515477e8651420bbce8cec5-1100x825.jpg' } },
-  { id: '14', name: 'Shashlik', description: 'Ароматный шашлык, приготовленный на углях с маринованным мясом.', image: { uri: 'https://fs.cap.ru/file/HY3vnp6bhrw0CG3MsC7AOlfChDgqGUuM' } },
-  { id: '15', name: 'Fish & Chips', description: 'Хрустящая рыба с золотистым картофелем фри – популярное английское блюдо.', image: { uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Fish_and_chips_blackpool.jpg/1200px-Fish_and_chips_blackpool.jpg' } },
+  // Fetch recipes based on the selected tab
+  const fetchRecipes = async () => {
+    let endpoint = '/recipes';
+    if (tab === 'mine') endpoint = '/recipes/mine';
+    if (tab === 'favorites') endpoint = '/recipes/favorites';
 
-  // Перекусы
-  { id: '21', name: 'Granola Bar', description: 'Полезный батончик из злаков и орехов, заряжающий энергией.', image: { uri: 'https://static.life.ru/01b76aa67969329103185b5a23a46b08.jpg' } },
-  { id: '22', name: 'Fruit Salad', description: 'Освежающий салат из свежих фруктов, богатых витаминами.', image: { uri: 'https://storage.myseldon.com/news-pict-a5/A570D09657B4BE5C8A36D8765CD8DEFF' } },
-  { id: '23', name: 'Yogurt with Nuts', description: 'Натуральный йогурт с орехами – идеальный источник белка и полезных жиров.', image: { uri: 'https://avatars.mds.yandex.net/i?id=947f067965a9a0e1857b4e0b71b5c513_l-5210344-images-thumbs&n=13' } },
-  { id: '24', name: 'Cheese Crackers', description: 'Хрустящие крекеры с сыром – вкусный и сытный перекус.', image: { uri: 'https://i.pinimg.com/originals/17/b7/6b/17b76bcf059e46dfab4adfd18aa4ca90.jpg' } },
-  { id: '25', name: 'Peanut Butter Toast', description: 'Тост с арахисовой пастой – отличное сочетание вкуса и энергии.', image: { uri: 'https://paromag.ru/upload/iblock/7d3/toast_box_peanut_butter_with_kaya_bread.jpg' } }
-];
+    try {
+      const token = await SecureStore.getItemAsync('token');
+      if (!token) return;
 
+      const res = await axios.get(`${API_BASE_URL}${endpoint}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
+      setRecipes(res.data);
+    } catch (err) {
+      console.error('Ошибка загрузки рецептов:', err.message);
+    }
+  };
 
-function RecipesScreen({ route }) {
-  const navigation = useNavigation();
-  const addMeal = route.params?.addMeal;
+  // Fetch recipes by name (for search functionality)
+  const searchRecipes = async () => {
+    if (searchQuery.trim()) {
+      try {
+        const token = await SecureStore.getItemAsync('token');
+        const res = await axios.get(`${API_BASE_URL}/search-recipes`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { name: searchQuery },
+        });
+        setRecipes(res.data);
+      } catch (err) {
+        console.error('Ошибка поиска рецептов:', err.response ? err.response.data : err.message);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchRecipes();
+  }, [tab]);
+
+  // Pick image for the recipe
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setImage(result.assets[0]);
+    }
+  };
+
+  const resetForm = () => {
+    setName('');
+    setDescription('');
+    setIngredients('');
+    setSteps('');
+    setImage(null);
+  };
+
+  const createRecipe = async () => {
+    setLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync('token');
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('ingredients', JSON.stringify(ingredients.split(',').map(i => i.trim())));
+      formData.append('steps', JSON.stringify(steps.split('.').map(s => s.trim())));
+
+      if (image) {
+        formData.append('image', {
+          uri: image.uri,
+          name: 'photo.jpg',
+          type: 'image/jpeg',
+        });
+      }
+
+      await axios.post(`${API_BASE_URL}/my-recipes`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setModalVisible(false);
+      resetForm();
+      fetchRecipes();
+    } catch (err) {
+      console.error('Ошибка создания рецепта:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteRecipe = async (id) => {
+    try {
+      const token = await SecureStore.getItemAsync('token');
+      await axios.delete(`${API_BASE_URL}/my-recipes/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchRecipes();
+    } catch (err) {
+      console.error('Ошибка удаления рецепта:', err.message);
+    }
+  };
+
+  const addToFavorites = async (id) => {
+    try {
+      const token = await SecureStore.getItemAsync('token');
+      await axios.post(`${API_BASE_URL}/favorite-recipes/${id}`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchRecipes();
+    } catch (err) {
+      console.error('Ошибка добавления в избранное:', err.message);
+    }
+  };
+
+  const removeFromFavorites = async (id) => {
+    try {
+      const token = await SecureStore.getItemAsync('token');
+      await axios.delete(`${API_BASE_URL}/favorite-recipes/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchRecipes();
+    } catch (err) {
+      console.error('Ошибка удаления из избранного:', err.message);
+    }
+  };
+
+  const renderRecipe = ({ item }) => (
+    <View style={styles.recipe}>
+      <Text style={styles.recipeTitle}>{item.name}</Text>
+      {item.image && (
+        <Image source={{ uri: `${API_BASE_URL}${item.image}` }} style={styles.recipeImage} />
+      )}
+      <Text>{item.description}</Text>
+      <View style={styles.recipeActions}>
+        <Button title="Удалить" onPress={() => deleteRecipe(item.id)} />
+        {tab !== 'favorites' && (
+          <Button title="Добавить в избранное" onPress={() => addToFavorites(item.id)} />
+        )}
+        {tab === 'favorites' && (
+          <Button title="Удалить из избранного" onPress={() => removeFromFavorites(item.id)} />
+        )}
+      </View>
+    </View>
+  );
 
   return (
-    <View style={styles.container}>
-      {/* <Text style={styles.title}>Recipes</Text>
-      <Text style={styles.subtitle}>Discover delicious homemade recipes</Text> */}
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={styles.searchContainer}>
+        <TextInput
+          placeholder="Поиск рецептов"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          style={styles.searchInput}
+        />
+        <Button title="Поиск" onPress={searchRecipes} />
+      </View>
+
+      <View style={styles.tabContainer}>
+        {['all', 'mine', 'favorites'].map(t => (
+          <TouchableOpacity key={t} onPress={() => setTab(t)} style={[styles.tab, tab === t && styles.activeTab]}>
+            <Text style={[styles.tabText, tab === t && styles.activeTabText]}>
+              {t === 'all' ? 'Все рецепты' : t === 'mine' ? 'Мои рецепты' : 'Избранные'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
       <FlatList
         data={recipes}
-        keyExtractor={(item) => item.id}
-        numColumns={2} // Два столбца
-        columnWrapperStyle={styles.row} // Разделяем строки
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.recipeCard}
-            onPress={() => {
-              addMeal(item);
-              navigation.navigate('Plan');
-            }}>
-            <Image source={item.image} style={styles.recipeImage} />
-            <Text style={styles.recipeName}>{item.name}</Text>
-          </TouchableOpacity>
-          
-        )}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderRecipe}
+        contentContainerStyle={{ padding: 10 }}
       />
-    </View>
+
+      <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
+        <Text style={styles.addButtonText}>＋</Text>
+      </TouchableOpacity>
+
+      <Modal visible={modalVisible} animationType="slide">
+        <ScrollView contentContainerStyle={styles.modalContent}>
+          <Text style={styles.modalTitle}>Новый рецепт</Text>
+          <TextInput placeholder="Название" value={name} onChangeText={setName} style={styles.input} />
+          <TextInput placeholder="Описание" value={description} onChangeText={setDescription} style={styles.input} />
+          <TextInput placeholder="Ингредиенты (через запятую)" value={ingredients} onChangeText={setIngredients} style={styles.input} />
+          <TextInput placeholder="Шаги (через точку)" value={steps} onChangeText={setSteps} style={styles.input} />
+          <Button title="Выбрать изображение" onPress={pickImage} />
+          {image && <Image source={{ uri: image.uri }} style={styles.image} />}
+          <Button title={loading ? "Сохраняем..." : "Сохранить"} onPress={createRecipe} disabled={loading} />
+          <Button title="Закрыть" onPress={() => setModalVisible(false)} />
+        </ScrollView>
+      </Modal>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 5 },
-  subtitle: { fontSize: 14, color: '#888', marginBottom: 20 },
-  row: { justifyContent: 'space-between' }, // Выравниваем элементы в строке
-  recipeCard: {
-    flex: 1,
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-    borderRadius: 15,
-    padding: 10,
-    margin: 5,
+  tabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: '#eee',
+    paddingVertical: 10,
   },
-  recipeImage: { width: 120, height: 120, borderRadius: 15, marginBottom: 10 },
-  recipeName: { fontSize: 16, fontWeight: 'bold', textAlign: 'center' },
+  tab: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  activeTab: {
+    backgroundColor: '#007bff',
+  },
+  tabText: {
+    color: '#333',
+  },
+  activeTabText: {
+    color: 'white',
+  },
+  recipe: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 8,
+    backgroundColor: '#fdfdfd',
+  },
+  recipeTitle: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  recipeImage: {
+    width: '100%',
+    height: 150,
+    marginVertical: 5,
+  },
+  recipeActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  addButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 30,
+    backgroundColor: '#007bff',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+  },
+  addButtonText: {
+    fontSize: 30,
+    color: 'white',
+  },
+  modalContent: {
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  input: {
+    borderWidth: 1, borderColor: '#ccc', padding: 8, borderRadius: 6, marginVertical: 5,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    padding: 10,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+  },
+  searchInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 8,
+    borderRadius: 6,
+    marginRight: 10,
+  },
+  image: {
+    width: '100%',
+    height: 200,
+    marginVertical: 10,
+    borderRadius: 8,
+  },
 });
-
-export default RecipesScreen;

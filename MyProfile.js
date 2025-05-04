@@ -8,33 +8,38 @@ import {
   TextInput,
   Text,
   Dimensions,
-  ActivityIndicator
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import axios from 'axios';
 import { LineChart } from 'react-native-chart-kit';
-import { API_BASE_URL } from './config';
+import Constants from 'expo-constants';
+import axiosInstance from './axiosInstance';
+import Toast from 'react-native-toast-message';
+import RNPickerSelect from 'react-native-picker-select';
+
+export const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL;
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [weightRecords, setWeightRecords] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editMode, setEditMode] = useState(false);
 
   const getProfile = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/profile`, {
-        withCredentials: true
-      });
-      setProfile(res.data); // добавлено
+      const res = await axiosInstance.get('/profile');
+      setProfile(res.data);
     } catch (err) {
-      console.error('Ошибка при загрузке профиля:', err);
+      console.error('Ошибка получения профиля:', err);
     }
   };
 
   const getWeightRecords = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/weight-records`);
-      // сортируем по дате
+      const res = await axiosInstance.get('/weight-records');
       const sorted = res.data.sort((a, b) => new Date(a.date) - new Date(b.date));
       setWeightRecords(sorted);
     } catch (err) {
@@ -42,25 +47,10 @@ export default function ProfileScreen() {
     }
   };
 
- useEffect(() => {
-  getProfile();
-  getWeightRecords();
-
-  // Для проверки
-  setProfile({
-    full_name: 'Айдос',
-    gender: 'мужской',
-    weight: 75,
-    goal_weight: 70,
-    // profile_picture: require('../assets/NMava.jpg'),
-  });
-
-  setWeightRecords([
-    { date: '2025-04-01', weight: 76 },
-    { date: '2025-04-10', weight: 75 },
-    { date: '2025-04-20', weight: 74 },
-  ]);
-}, []);
+  useEffect(() => {
+    getProfile();
+    getWeightRecords();
+  }, []);
 
   const handleImagePick = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -79,32 +69,43 @@ export default function ProfileScreen() {
   };
 
   const handleSave = async () => {
-    setIsLoading(true);
     try {
+      setIsLoading(true);
+
       const formData = new FormData();
       formData.append('full_name', profile.full_name || '');
       formData.append('gender', profile.gender || '');
-      formData.append('weight', String(profile.weight || ''));
-      formData.append('goal_weight', String(profile.goal_weight || ''));
+      formData.append('weight', profile.weight?.toString() || '');
+      formData.append('goal_weight', profile.goal_weight?.toString() || '');
 
-      if (profile.profile_picture && profile.profile_picture.startsWith('file')) {
+      if (profile.profile_picture && typeof profile.profile_picture === 'string') {
         formData.append('profile_picture', {
           uri: profile.profile_picture,
-          name: 'profile.jpg',
           type: 'image/jpeg',
+          name: 'profile.jpg',
         });
       }
 
-      const res = await axios.post(`${BASE_URL}/update/profile`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        withCredentials: true,
+      const response = await axiosInstance.put(`/profile`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
-      setProfile(res.data.user);
-    } catch (err) {
-      console.error('Ошибка при сохранении:', err);
-    } finally {
+      setProfile(response.data.user);
       setIsLoading(false);
+
+      Toast.show({
+        type: 'success',
+        text1: 'Профиль обновлён',
+      });
+    } catch (error) {
+      console.error('Ошибка при сохранении:', error);
+      setIsLoading(false);
+      Toast.show({
+        type: 'error',
+        text1: 'Ошибка при сохранении профиля',
+      });
     }
   };
 
@@ -119,8 +120,8 @@ export default function ProfileScreen() {
     const data = weightRecords.map((item) => item.weight);
 
     return (
-      <View style={{ marginTop: 20 }}>
-        <Text style={styles.label}>График веса</Text>
+      <View style={{ marginTop: 30 }}>
+        <Text style={styles.sectionTitle}>График веса</Text>
         <LineChart
           data={{
             labels,
@@ -130,16 +131,22 @@ export default function ProfileScreen() {
           height={220}
           yAxisSuffix=" кг"
           chartConfig={{
-            backgroundColor: '#f5f5f5',
-            backgroundGradientFrom: '#fff',
-            backgroundGradientTo: '#fff',
+            backgroundColor: '#f0f0f0',
+            backgroundGradientFrom: '#ffffff',
+            backgroundGradientTo: '#ffffff',
             decimalPlaces: 1,
-            color: (opacity = 1) => `rgba(0, 123, 255, ${opacity})`,
-            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+            color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
+            labelColor: () => '#333',
             style: { borderRadius: 16 },
           }}
           style={{ borderRadius: 16 }}
         />
+
+        {weightRecords.length > 0 && (
+          <Text style={{ fontSize: 13, color: '#777', textAlign: 'center', marginTop: 6 }}>
+            Последнее обновление: {new Date(weightRecords[weightRecords.length - 1].date).toLocaleDateString()}
+          </Text>
+        )}
       </View>
     );
   };
@@ -149,97 +156,168 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <TouchableOpacity onPress={handleImagePick}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+    >
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Аватар и Имя */}
         <Image
-          source={{ uri: profile.profile_picture || 'https://placehold.co/100x100' }}
+          source={{
+            uri: profile.profile_picture || 'https://placehold.co/100x100',
+          }}
           style={styles.avatar}
         />
-      </TouchableOpacity>
-
-      <Text style={styles.label}>Имя</Text>
-      <TextInput
-        value={profile.full_name || ''}
-        onChangeText={(text) => setProfile({ ...profile, full_name: text })}
-        style={styles.input}
-      />
-
-      <Text style={styles.label}>Пол</Text>
-      <TextInput
-        value={profile.gender || ''}
-        onChangeText={(text) => setProfile({ ...profile, gender: text })}
-        style={styles.input}
-      />
-
-      <Text style={styles.label}>Текущий вес</Text>
-      <TextInput
-        keyboardType="numeric"
-        value={profile.weight !== undefined ? String(profile.weight) : ''}
-        onChangeText={(text) => {
-          const parsed = parseFloat(text);
-          setProfile({ ...profile, weight: isNaN(parsed) ? '' : parsed });
-        }}
-        style={styles.input}
-      />
-
-      <Text style={styles.label}>Целевой вес</Text>
-      <TextInput
-        keyboardType="numeric"
-        value={profile.goal_weight !== undefined ? String(profile.goal_weight) : ''}
-        onChangeText={(text) => {
-          const parsed = parseFloat(text);
-          setProfile({ ...profile, goal_weight: isNaN(parsed) ? '' : parsed });
-        }}
-        style={styles.input}
-      />
-
-      <TouchableOpacity
-        onPress={handleSave}
-        style={[styles.saveButton, isLoading && { backgroundColor: '#ccc' }]}
-        disabled={isLoading}
-      >
-        <Text style={styles.saveButtonText}>{isLoading ? 'Сохраняю...' : 'СОХРАНИТЬ'}</Text>
-      </TouchableOpacity>
-
-      {renderChart()}
-    </ScrollView>
-  );
+        <Text style={{ fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 10 }}>
+          {profile.full_name || 'Имя пользователя'}
+        </Text>
+  
+        {/* Кнопка включения режима редактирования */}
+        <TouchableOpacity
+          onPress={() => setEditMode(!editMode)}
+          style={[styles.saveButton, { backgroundColor: '#6c757d' }]}
+        >
+          <Text style={styles.saveButtonText}>
+            {editMode ? 'Отменить' : 'Редактировать профиль'}
+          </Text>
+        </TouchableOpacity>
+  
+        {/* Форма редактирования, если editMode === true */}
+        {editMode && (
+          <>
+            <TouchableOpacity onPress={handleImagePick}>
+              <Text style={{ textAlign: 'center', color: '#007bff', marginTop: 10 }}>
+                Изменить фото
+              </Text>
+            </TouchableOpacity>
+  
+            <Text style={styles.label}>Имя</Text>
+            <TextInput
+              value={profile.full_name || ''}
+              onChangeText={(text) => setProfile({ ...profile, full_name: text })}
+              style={styles.input}
+              placeholder="Введите имя"
+            />
+  
+            <Text style={styles.label}>Пол</Text>
+            <RNPickerSelect
+              onValueChange={(value) => setProfile({ ...profile, gender: value })}
+              items={[
+                { label: 'Мужской', value: 'мужской' },
+                { label: 'Женский', value: 'женский' },
+              ]}
+              value={profile.gender}
+              style={{
+                inputIOS: styles.input,
+                inputAndroid: styles.input,
+              }}
+              placeholder={{ label: 'Выберите пол', value: null }}
+            />
+  
+            <Text style={styles.label}>Текущий вес (кг)</Text>
+            <TextInput
+              keyboardType="numeric"
+              value={profile.weight !== undefined ? String(profile.weight) : ''}
+              onChangeText={(text) =>
+                setProfile({ ...profile, weight: parseFloat(text) || '' })
+              }
+              style={styles.input}
+              placeholder="Например, 75"
+            />
+  
+            <Text style={styles.label}>Целевой вес (кг)</Text>
+            <TextInput
+              keyboardType="numeric"
+              value={profile.goal_weight !== undefined ? String(profile.goal_weight) : ''}
+              onChangeText={(text) =>
+                setProfile({ ...profile, goal_weight: parseFloat(text) || '' })
+              }
+              style={styles.input}
+              placeholder="Например, 70"
+            />
+  
+            <TouchableOpacity
+              onPress={handleSave}
+              style={[styles.saveButton, isLoading && { backgroundColor: '#ccc' }]}
+              disabled={isLoading}
+            >
+              <Text style={styles.saveButtonText}>
+                {isLoading ? 'Сохраняю...' : 'СОХРАНИТЬ'}
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
+  
+        {/* Вес и прогресс */}
+        {profile.weight && (
+          <View style={{ marginTop: 20 }}>
+            <Text style={{ fontSize: 16, textAlign: 'center' }}>
+              Текущий вес: <Text style={{ fontWeight: '600' }}>{profile.weight} кг</Text>
+            </Text>
+            <Text style={{ fontSize: 14, textAlign: 'center', color: '#555' }}>
+              Дата: {new Date().toLocaleDateString()}
+            </Text>
+  
+            {profile.goal_weight && (
+              <Text style={{ fontSize: 15, textAlign: 'center', marginTop: 4 }}>
+                Прогресс: {profile.weight - profile.goal_weight > 0 ? '-' : ''}
+                {Math.abs(profile.weight - profile.goal_weight)} кг до цели
+              </Text>
+            )}
+          </View>
+        )}
+  
+        {/* График */}
+        {renderChart()}
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );  
 }
 
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    gap: 15,
-    backgroundColor: '#f5f5f5',
+    gap: 12,
+    backgroundColor: '#f2f2f2',
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     alignSelf: 'center',
     marginBottom: 20,
+    backgroundColor: '#ddd',
   },
   label: {
-    fontWeight: 'bold',
-    marginBottom: 5,
+    fontWeight: '600',
+    color: '#333',
+    fontSize: 16,
+    marginBottom: 4,
   },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
+    borderRadius: 12,
+    padding: 12,
     backgroundColor: '#fff',
-    marginBottom: 10,
+    fontSize: 15,
   },
   saveButton: {
     backgroundColor: '#007bff',
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 10,
   },
   saveButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#222',
+    marginBottom: 10,
   },
 });

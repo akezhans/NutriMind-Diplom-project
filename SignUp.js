@@ -4,7 +4,11 @@ import { useNavigation } from '@react-navigation/native';
 import * as Font from 'expo-font';
 import axios from 'axios';
 import { Image } from 'react-native';
-import { API_BASE_URL } from './config';
+import Constants from 'expo-constants';
+import * as SecureStore from 'expo-secure-store';
+
+
+export const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL;
 
 const SignUp = () => {
   const navigation = useNavigation();
@@ -34,22 +38,32 @@ const SignUp = () => {
       Alert.alert("Error", "Please fill all fields");
       return;
     }
-
+  
     try {
-      const response = await axios.post(`${API_BASE_URL}/signup`, {
+      const response = await axios.post(`${API_BASE_URL}/signupjwt`, {
         fullName,
         email,
         password
       });
-
-      console.log('User created:', response.data);
-      Alert.alert('Success', 'User registered successfully!');
-      navigation.navigate('Login');  // Перенаправление на экран логина после успешной регистрации
+  
+      const { token, user } = response.data;
+  
+      if (token) {
+        await SecureStore.setItemAsync('token', token); // Сохраняем токен
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  
+        Alert.alert('Success', 'User registered successfully!');
+        navigation.navigate('Main');
+      } else {
+        throw new Error('No token received');
+      }
+  
     } catch (error) {
       console.error('Error during sign up:', error.response?.data?.error || error.message);
       Alert.alert('Error', error.response?.data?.error || 'Something went wrong');
     }
   };
+  
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>

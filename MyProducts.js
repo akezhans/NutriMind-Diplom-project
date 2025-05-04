@@ -1,233 +1,302 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Image, FlatList, TouchableOpacity, Alert, StyleSheet, Modal } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  TextInput,
+  TouchableOpacity,
+  Modal,
+  StyleSheet,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import axios from 'axios';
+import Constants from 'expo-constants';
 
-const MyProductsPage = () => {
-  const [products, setProducts] = useState([
-    { id: '1', name: 'Молоко', image: 'https://via.placeholder.com/100', category: 'Молочные продукты', expiryDate: '2025-04-15' },
-    { id: '2', name: 'Яблоки', image: 'https://via.placeholder.com/100', category: 'Фрукты', expiryDate: '2025-04-20' },
-    // Пример продуктов
-  ]);
-  
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentProduct, setCurrentProduct] = useState(null);
-  
-  const [productName, setProductName] = useState('');
-  const [productImage, setProductImage] = useState('');
-  const [productCategory, setProductCategory] = useState('');
-  const [productExpiryDate, setProductExpiryDate] = useState('');
+const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL;
 
-  // Функция для добавления нового продукта
-  const addProduct = () => {
-    const newProduct = {
-      id: String(products.length + 1),
-      name: productName,
-      image: productImage || 'https://via.placeholder.com/100',
-      category: productCategory,
-      expiryDate: productExpiryDate,
-    };
-    setProducts([...products, newProduct]);
-    setIsModalVisible(false);
-    clearForm();
+export default function MyProductsScreen() {
+  const [products, setProducts] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [name, setName] = useState('');
+  const [number, setNumber] = useState('');
+  const [image, setImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/products`);
+      setProducts(response.data);
+    } catch (error) {
+      console.error('Ошибка при получении продуктов:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Функция для редактирования продукта
-  const editProduct = (id) => {
-    const productToEdit = products.find(product => product.id === id);
-    setCurrentProduct(productToEdit);
-    setProductName(productToEdit.name);
-    setProductImage(productToEdit.image);
-    setProductCategory(productToEdit.category);
-    setProductExpiryDate(productToEdit.expiryDate);
-    setIsEditing(true);
-    setIsModalVisible(true);
-  };
+  const handleAddProduct = async () => {
+    if (!name || !number || !image) {
+      Alert.alert('Ошибка', 'Заполните все поля и выберите изображение.');
+      return;
+    }
 
-  // Функция для сохранения изменений продукта
-  const saveProductChanges = () => {
-    const updatedProducts = products.map(product => {
-      if (product.id === currentProduct.id) {
-        return {
-          ...product,
-          name: productName,
-          image: productImage,
-          category: productCategory,
-          expiryDate: productExpiryDate,
-        };
-      }
-      return product;
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('number', number);
+    formData.append('image', {
+      uri: image,
+      name: 'photo.jpg',
+      type: 'image/jpeg',
     });
-    setProducts(updatedProducts);
-    setIsModalVisible(false);
-    setIsEditing(false);
-    clearForm();
+
+    try {
+      setLoading(true);
+      await axios.post(`${API_BASE_URL}/products`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setModalVisible(false);
+      setName('');
+      setNumber('');
+      setImage(null);
+      fetchProducts();
+    } catch (error) {
+      console.error('Ошибка при добавлении продукта:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Очистка формы
-  const clearForm = () => {
-    setProductName('');
-    setProductImage('');
-    setProductCategory('');
-    setProductExpiryDate('');
+  const handleDeleteProduct = async (id) => {
+    Alert.alert('Удаление', 'Удалить этот продукт?', [
+      { text: 'Отмена', style: 'cancel' },
+      {
+        text: 'Удалить',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await axios.delete(`${API_BASE_URL}/products/${id}`);
+            fetchProducts();
+          } catch (error) {
+            console.error('Ошибка при удалении продукта:', error);
+          }
+        },
+      },
+    ]);
   };
 
-  // Функция для удаления продукта
-  const deleteProduct = (id) => {
-    setProducts(products.filter(product => product.id !== id));
-    Alert.alert('Удалено', 'Продукт был удален');
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
   };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const renderProduct = ({ item }) => (
+    <View style={styles.productCard}>
+      <Image source={{ uri: `${API_BASE_URL}${item.image}` }} style={styles.productImage} />
+      <View style={styles.productInfo}>
+        <Text style={styles.productName}>{item.name}</Text>
+        <Text style={styles.productNumber}>Количество: {item.number}</Text>
+      </View>
+      <TouchableOpacity onPress={() => handleDeleteProduct(item.ID)}>
+        <Text style={styles.deleteBtn}>✕</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Мои продукты</Text>
-      <Text style={styles.subtitle}>Добавьте или отредактируйте продукты в вашем списке</Text>
-      <Button title="Добавить продукт" onPress={() => setIsModalVisible(true)} />
+      <Text style={styles.header}>Мои продукты</Text>
 
-      <FlatList
-        data={products}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.mealItem}>
-            <Image source={{ uri: item.image }} style={styles.mealImage} />
-            <View style={styles.mealDetails}>
-              <Text style={styles.mealName}>{item.name}</Text>
-              <Text style={styles.mealInfo}>Категория: {item.category}</Text>
-              <Text style={styles.mealInfo}>Срок годности: {item.expiryDate}</Text>
-            </View>
-            <View style={styles.productActions}>
-              <Button title="Редактировать" onPress={() => editProduct(item.id)} />
-              <Button title="Удалить" onPress={() => deleteProduct(item.id)} color="red" />
-            </View>
-          </View>
-        )}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 50 }} />
+      ) : (
+        <FlatList
+          data={products}
+          // keyExtractor={(item) => item.ID.toString()}
+          renderItem={renderProduct}
+          contentContainerStyle={{ paddingBottom: 100 }}
+        />
+      )}
 
-      {/* Модальное окно для добавления/редактирования продуктов */}
-      <Modal visible={isModalVisible} animationType="slide" onRequestClose={() => setIsModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>{isEditing ? 'Редактировать продукт' : 'Добавить продукт'}</Text>
+      <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
+        <Text style={styles.addButtonText}>+</Text>
+      </TouchableOpacity>
+
+      <Modal visible={modalVisible} animationType="slide">
+        <SafeAreaView style={styles.modalContainer}>
+          <ScrollView>
+            <Text style={styles.modalTitle}>Добавить продукт</Text>
             <TextInput
-              style={styles.input}
               placeholder="Название продукта"
-              value={productName}
-              onChangeText={setProductName}
+              style={styles.input}
+              value={name}
+              onChangeText={setName}
             />
             <TextInput
+              placeholder="Количество"
               style={styles.input}
-              placeholder="Ссылка на изображение"
-              value={productImage}
-              onChangeText={setProductImage}
+              value={number}
+              onChangeText={setNumber}
+              keyboardType="numeric"
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Категория"
-              value={productCategory}
-              onChangeText={setProductCategory}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Срок годности (например, 2025-04-15)"
-              value={productExpiryDate}
-              onChangeText={setProductExpiryDate}
-            />
+            <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
+              <Text style={styles.imageButtonText}>Выбрать изображение</Text>
+            </TouchableOpacity>
+            {image && <Image source={{ uri: image }} style={styles.preview} />}
             <View style={styles.modalButtons}>
-              <Button title={isEditing ? 'Сохранить изменения' : 'Добавить'} onPress={isEditing ? saveProductChanges : addProduct} />
-              <Button title="Отмена" onPress={() => setIsModalVisible(false)} color="gray" />
+              <TouchableOpacity style={styles.saveBtn} onPress={handleAddProduct}>
+                <Text style={styles.saveText}>Сохранить</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setModalVisible(false)}>
+                <Text style={styles.cancelText}>Отмена</Text>
+              </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </ScrollView>
+        </SafeAreaView>
       </Modal>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FCFCFC',
-    padding: 20,
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingTop: 20,
   },
-  title: {
-    fontSize: 28,
+  header: {
+    fontSize: 26,
     fontWeight: 'bold',
-    marginTop: 40,
-    marginBottom: 5,
+    marginBottom: 12,
   },
-  subtitle: {
-    fontSize: 14,
-    color: '#888',
-    marginBottom: 20,
-  },
-  mealItem: {
+  productCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    height: 70,
-    padding: 10,
-    borderRadius: 10,
+    backgroundColor: '#f9f9f9',
+    padding: 12,
+    borderRadius: 12,
     marginBottom: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
   },
-  mealImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 5,
-    marginRight: 10,
+  productImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 10,
+    marginRight: 12,
+    backgroundColor: '#e0e0e0',
   },
-  mealDetails: {
+  productInfo: {
     flex: 1,
   },
-  mealName: {
+  productName: {
     fontSize: 16,
     fontWeight: 'bold',
   },
-  mealInfo: {
-    fontSize: 12,
-    color: '#888',
+  productNumber: {
+    fontSize: 14,
+    color: '#777',
+    marginTop: 2,
   },
-  productActions: {
-    justifyContent: 'space-evenly',
-    alignItems: 'center',
-  },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Затемнённый фон
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modal: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    width: 300,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 18,
+  deleteBtn: {
+    fontSize: 20,
+    color: 'red',
     fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  input: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 15,
     paddingHorizontal: 10,
   },
+  addButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
+    backgroundColor: '#4CAF50',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 32,
+    lineHeight: 32,
+  },
+  modalContainer: {
+    flex: 1,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 15,
+  },
+  imageButton: {
+    backgroundColor: '#2196F3',
+    padding: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  imageButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  preview: {
+    width: '100%',
+    height: 200,
+    marginTop: 15,
+    borderRadius: 12,
+  },
   modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 10,
+  },
+  saveBtn: {
+    backgroundColor: '#4CAF50',
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  saveText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  cancelBtn: {
+    backgroundColor: '#ccc',
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  cancelText: {
+    color: '#333',
+    fontWeight: 'bold',
   },
 });
-
-export default MyProductsPage;

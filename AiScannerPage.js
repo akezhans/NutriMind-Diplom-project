@@ -3,7 +3,12 @@ import axios from 'axios';
 import { View, Text, Button, Image, ActivityIndicator, Alert, ScrollView, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
-import { API_BASE_URL } from './config';
+import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
+
+
+export const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL;
 
 const AiScannerPage = () => {
   const navigation = useNavigation();
@@ -76,19 +81,19 @@ const AiScannerPage = () => {
     setError('');
   
     const formData = new FormData();
-    // Проверяем содержимое selectedImage перед отправкой
-    console.log('selectedImage перед отправкой:', selectedImage);
-    
     formData.append('image', {
       uri: selectedImage.uri,
-      type: 'image/jpeg',  // укажите корректный MIME тип, если знаете его
+      type: 'image/jpeg',
       name: 'product-image.jpg',
     });
   
     try {
+      const token = await SecureStore.getItemAsync('token');
+  
       const response = await axios.post(`${API_BASE_URL}/analyze-product`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
         },
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -100,11 +105,12 @@ const AiScannerPage = () => {
       setScanResult(response.data);
     } catch (err) {
       console.error('Ошибка при сканировании:', err.response || err);
-      setError(`Ошибка: ${err.response ? err.response.data.message : 'Не удалось выполнить сканирование.'}`);
+      setError(`Ошибка: ${err.response?.data?.message || 'Не удалось выполнить сканирование.'}`);
     } finally {
       setLoading(false);
     }
   };
+  
 
   // 📊 Результаты анализа
   const renderScanResult = () => {

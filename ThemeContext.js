@@ -1,7 +1,19 @@
 import axios from 'axios';
 import { createContext, useEffect, useState } from 'react';
+import { useContext } from 'react';
+import Constants from 'expo-constants';
+
+export const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL;
 
 export const ThemeContext = createContext();
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme должен использоваться внутри ThemeProvider');
+  }
+  return context;
+};
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState('light');
@@ -16,7 +28,7 @@ export const ThemeProvider = ({ children }) => {
 
     const fetchSettings = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/settings', {
+        const response = await axios.get(`${API_BASE_URL}/settings`, {
           withCredentials: true
         });
         
@@ -39,7 +51,7 @@ export const ThemeProvider = ({ children }) => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     
     try {
-      await axios.put('http://localhost:8080/settings', {
+      await axios.put(`${API_BASE_URL}/settings`, {
         theme: newTheme
       }, {
         withCredentials: true

@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import axios from 'axios';
+import Constants from 'expo-constants';
+import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL;
 
 // Импорт экранов
 import Welcome from './Welcome';
@@ -16,7 +22,7 @@ import Recipe from './Recipe';
 import Calendar from './Calendar';
 import MyProducts from './MyProducts';
 import AiScannerPage from './AiScannerPage';
-import Help from './Help';
+// import Help from './Help';
 import RecipeDetailsScreen from './RecipeDetailsScreen';
 
 const Stack = createStackNavigator();
@@ -25,9 +31,26 @@ const Drawer = createDrawerNavigator();
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Проверка токена при запуске приложения
+  useEffect(() => {
+    const checkToken = async () => {
+      const token = await SecureStore.getItemAsync('token');  // Проверяем, есть ли токен
+      if (token) {
+        setIsAuthenticated(true);  // Если есть токен, ставим isAuthenticated в true
+      } else {
+        setIsAuthenticated(false); // Если нет токена, ставим false
+      }
+    };
+
+    checkToken();
+  }, []);
+
   return (
     <NavigationContainer>
-      {isAuthenticated ? <AppStack /> : <AuthStack setIsAuthenticated={setIsAuthenticated} />}
+      {isAuthenticated
+        ? <AppStack setIsAuthenticated={setIsAuthenticated} />
+        : <AuthStack setIsAuthenticated={setIsAuthenticated} />
+      }
     </NavigationContainer>
   );
 }
@@ -46,10 +69,12 @@ function AuthStack({ setIsAuthenticated }) {
 }
 
 // Главное меню (Drawer)
-function DrawerNavigator() {
+function DrawerNavigator({ setIsAuthenticated }) {
   return (
     <Drawer.Navigator
-      drawerContent={(props) => <CustomDrawerContent {...props} />}
+      drawerContent={(props) => (
+        <CustomDrawerContent {...props} setIsAuthenticated={setIsAuthenticated} />
+      )}
       screenOptions={{
         drawerActiveTintColor: '#000000',
         drawerActiveBackgroundColor: '#F6F6F6',
@@ -61,26 +86,42 @@ function DrawerNavigator() {
       <Drawer.Screen name="Plan" component={HomeScreen} options={{ drawerIcon: ({ color, size }) => (<Icon name="list-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="MyProfile" component={MyProfile} options={{ drawerIcon: ({ color, size }) => (<Icon name="person-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="Recipes" component={Recipe} options={{ drawerIcon: ({ color, size }) => (<Icon name="restaurant-outline" size={size} color={color} />) }} />
-      <Drawer.Screen name="Calendar" component={Calendar} options={{ drawerIcon: ({ color, size }) => (<Icon name="calendar-outline" size={size} color={color} />) }} />
+      {/* <Drawer.Screen name="Calendar" component={Calendar} options={{ drawerIcon: ({ color, size }) => (<Icon name="calendar-outline" size={size} color={color} />) }} /> */}
       <Drawer.Screen name="MyProducts" component={MyProducts} options={{ drawerIcon: ({ color, size }) => (<Icon name="cube-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="Scanner" component={AiScannerPage} options={{ drawerIcon: ({ color, size }) => (<Icon name="scan-outline" size={size} color={color} />) }} />
-      <Drawer.Screen name="Help" component={Help} options={{ drawerIcon: ({ color, size }) => <Icon name="help-circle-outline" size={size} color={color} /> }} />
+      {/* <Drawer.Screen name="Help" component={Help} options={{ drawerIcon: ({ color, size }) => <Icon name="help-circle-outline" size={size} color={color} /> }} /> */}
     </Drawer.Navigator>
   );
 }
 
 // Главный стек с Drawer + RecipeDetails
-function AppStack() {
+function AppStack({ setIsAuthenticated }) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Root" component={DrawerNavigator} />
+      <Stack.Screen name="Root">
+        {(props) => <DrawerNavigator {...props} setIsAuthenticated={setIsAuthenticated} />}
+      </Stack.Screen>
       <Stack.Screen name="RecipeDetails" component={RecipeDetailsScreen} />
     </Stack.Navigator>
   );
 }
 
-// Кастомное боковое меню
+// Кастомное боковое меню с Logout
 function CustomDrawerContent(props) {
+  const { setIsAuthenticated } = props;
+
+  const handleLogout = async () => {
+    try {
+      // Отправка запроса на сервер для выхода
+      await axios.post(`${API_BASE_URL}/signout`, {}, { withCredentials: true });
+      await SecureStore.deleteItemAsync('token');
+      await AsyncStorage.removeItem('isAuthenticated');
+      setIsAuthenticated(false);  // Сбрасываем состояние аутентификации
+    } catch (err) {
+      console.error('Ошибка при выходе:', err);
+    }
+  };
+
   return (
     <DrawerContentScrollView {...props}>
       <View style={styles.profileSection}>
@@ -93,7 +134,7 @@ function CustomDrawerContent(props) {
         label="Logout Account" 
         icon={({ size }) => <Icon name="log-out-outline" size={size} color="red" />} 
         labelStyle={{ color: 'red' }} 
-        onPress={() => props.navigation.reset({ index: 0, routes: [{ name: "Welcome" }] })} 
+        onPress={handleLogout} 
       />
     </DrawerContentScrollView>
   );
