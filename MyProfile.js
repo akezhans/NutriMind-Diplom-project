@@ -25,7 +25,6 @@ export default function ProfileScreen() {
   const [profile, setProfile] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [weightRecords, setWeightRecords] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
   const getProfile = async () => {
@@ -78,7 +77,7 @@ export default function ProfileScreen() {
       formData.append('weight', profile.weight?.toString() || '');
       formData.append('goal_weight', profile.goal_weight?.toString() || '');
 
-      if (profile.profile_picture && typeof profile.profile_picture === 'string') {
+      if (profile.profile_picture?.startsWith('file://')) {
         formData.append('profile_picture', {
           uri: profile.profile_picture,
           type: 'image/jpeg',
@@ -123,10 +122,7 @@ export default function ProfileScreen() {
       <View style={{ marginTop: 30 }}>
         <Text style={styles.sectionTitle}>График веса</Text>
         <LineChart
-          data={{
-            labels,
-            datasets: [{ data }],
-          }}
+          data={{ labels, datasets: [{ data }] }}
           width={Dimensions.get('window').width - 40}
           height={220}
           yAxisSuffix=" кг"
@@ -141,12 +137,9 @@ export default function ProfileScreen() {
           }}
           style={{ borderRadius: 16 }}
         />
-
-        {weightRecords.length > 0 && (
-          <Text style={{ fontSize: 13, color: '#777', textAlign: 'center', marginTop: 6 }}>
-            Последнее обновление: {new Date(weightRecords[weightRecords.length - 1].date).toLocaleDateString()}
-          </Text>
-        )}
+        <Text style={{ fontSize: 13, color: '#777', textAlign: 'center', marginTop: 6 }}>
+          Последнее обновление: {new Date(weightRecords[weightRecords.length - 1].date).toLocaleDateString('ru-RU')}
+        </Text>
       </View>
     );
   };
@@ -161,18 +154,14 @@ export default function ProfileScreen() {
       style={{ flex: 1 }}
     >
       <ScrollView contentContainerStyle={styles.container}>
-        {/* Аватар и Имя */}
         <Image
-          source={{
-            uri: profile.profile_picture || 'https://placehold.co/100x100',
-          }}
+          source={{ uri: profile.profile_picture || 'https://placehold.co/100x100' }}
           style={styles.avatar}
         />
         <Text style={{ fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 10 }}>
           {profile.full_name || 'Имя пользователя'}
         </Text>
-  
-        {/* Кнопка включения режима редактирования */}
+
         <TouchableOpacity
           onPress={() => setEditMode(!editMode)}
           style={[styles.saveButton, { backgroundColor: '#6c757d' }]}
@@ -181,8 +170,7 @@ export default function ProfileScreen() {
             {editMode ? 'Отменить' : 'Редактировать профиль'}
           </Text>
         </TouchableOpacity>
-  
-        {/* Форма редактирования, если editMode === true */}
+
         {editMode && (
           <>
             <TouchableOpacity onPress={handleImagePick}>
@@ -190,7 +178,7 @@ export default function ProfileScreen() {
                 Изменить фото
               </Text>
             </TouchableOpacity>
-  
+
             <Text style={styles.label}>Имя</Text>
             <TextInput
               value={profile.full_name || ''}
@@ -198,7 +186,7 @@ export default function ProfileScreen() {
               style={styles.input}
               placeholder="Введите имя"
             />
-  
+
             <Text style={styles.label}>Пол</Text>
             <RNPickerSelect
               onValueChange={(value) => setProfile({ ...profile, gender: value })}
@@ -213,29 +201,29 @@ export default function ProfileScreen() {
               }}
               placeholder={{ label: 'Выберите пол', value: null }}
             />
-  
+
             <Text style={styles.label}>Текущий вес (кг)</Text>
             <TextInput
               keyboardType="numeric"
               value={profile.weight !== undefined ? String(profile.weight) : ''}
               onChangeText={(text) =>
-                setProfile({ ...profile, weight: parseFloat(text) || '' })
+                setProfile({ ...profile, weight: text === '' ? '' : parseFloat(text) })
               }
               style={styles.input}
               placeholder="Например, 75"
             />
-  
+
             <Text style={styles.label}>Целевой вес (кг)</Text>
             <TextInput
               keyboardType="numeric"
               value={profile.goal_weight !== undefined ? String(profile.goal_weight) : ''}
               onChangeText={(text) =>
-                setProfile({ ...profile, goal_weight: parseFloat(text) || '' })
+                setProfile({ ...profile, goal_weight: text === '' ? '' : parseFloat(text) })
               }
               style={styles.input}
               placeholder="Например, 70"
             />
-  
+
             <TouchableOpacity
               onPress={handleSave}
               style={[styles.saveButton, isLoading && { backgroundColor: '#ccc' }]}
@@ -247,17 +235,15 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </>
         )}
-  
-        {/* Вес и прогресс */}
+
         {profile.weight && (
           <View style={{ marginTop: 20 }}>
             <Text style={{ fontSize: 16, textAlign: 'center' }}>
               Текущий вес: <Text style={{ fontWeight: '600' }}>{profile.weight} кг</Text>
             </Text>
             <Text style={{ fontSize: 14, textAlign: 'center', color: '#555' }}>
-              Дата: {new Date().toLocaleDateString()}
+              Дата: {new Date().toLocaleDateString('ru-RU')}
             </Text>
-  
             {profile.goal_weight && (
               <Text style={{ fontSize: 15, textAlign: 'center', marginTop: 4 }}>
                 Прогресс: {profile.weight - profile.goal_weight > 0 ? '-' : ''}
@@ -266,12 +252,11 @@ export default function ProfileScreen() {
             )}
           </View>
         )}
-  
-        {/* График */}
+
         {renderChart()}
       </ScrollView>
     </KeyboardAvoidingView>
-  );  
+  );
 }
 
 const styles = StyleSheet.create({

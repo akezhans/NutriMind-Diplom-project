@@ -19,7 +19,7 @@ import Main from './Main';
 import HomeScreen from './HomeScreen';
 import MyProfile from './MyProfile';
 import Recipe from './Recipe';
-import Calendar from './Calendar';
+import Chat from './Chat';
 import MyProducts from './MyProducts';
 import AiScannerPage from './AiScannerPage';
 // import Help from './Help';
@@ -86,7 +86,7 @@ function DrawerNavigator({ setIsAuthenticated }) {
       <Drawer.Screen name="Plan" component={HomeScreen} options={{ drawerIcon: ({ color, size }) => (<Icon name="list-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="MyProfile" component={MyProfile} options={{ drawerIcon: ({ color, size }) => (<Icon name="person-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="Recipes" component={Recipe} options={{ drawerIcon: ({ color, size }) => (<Icon name="restaurant-outline" size={size} color={color} />) }} />
-      {/* <Drawer.Screen name="Calendar" component={Calendar} options={{ drawerIcon: ({ color, size }) => (<Icon name="calendar-outline" size={size} color={color} />) }} /> */}
+      <Drawer.Screen name="Chat" component={Chat} options={{ drawerIcon: ({ color, size }) => (<Icon name="calendar-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="MyProducts" component={MyProducts} options={{ drawerIcon: ({ color, size }) => (<Icon name="cube-outline" size={size} color={color} />) }} />
       <Drawer.Screen name="Scanner" component={AiScannerPage} options={{ drawerIcon: ({ color, size }) => (<Icon name="scan-outline" size={size} color={color} />) }} />
       {/* <Drawer.Screen name="Help" component={Help} options={{ drawerIcon: ({ color, size }) => <Icon name="help-circle-outline" size={size} color={color} /> }} /> */}
