@@ -15,12 +15,10 @@ import moment from 'moment';
 import 'moment/locale/ru';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
+import { AntDesign } from '@expo/vector-icons';
 
 export const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL;
 
-
-
-// Настройки API
 const getAuthHeader = async () => {
   const token = await SecureStore.getItemAsync('token');
   return {
@@ -30,28 +28,22 @@ const getAuthHeader = async () => {
   };
 };
 
-// Категории
 const categories = ['Завтрак', 'Обед', 'Ужин', 'Перекус'];
 
 moment.locale('ru');
 
 const HomeScreen = () => {
-  const [selectedDay, setSelectedDay] = useState(moment().startOf('isoWeek'));
-  const [mealPlans, setMealPlans] = useState({
-    Завтрак: [],
-    Обед: [],
-    Ужин: [],
-    Перекус: [],
-  });
+  const [selectedDay, setSelectedDay] = useState(moment());
+  const [mealPlans, setMealPlans] = useState({ Завтрак: [], Обед: [], Ужин: [], Перекус: [] });
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [allRecipes, setAllRecipes] = useState([]);
 
   const getWeekDates = () => {
-    const startOfWeek = moment().startOf('isoWeek');
+    const today = moment();
     return Array.from({ length: 7 }, (_, i) => {
-      const date = startOfWeek.clone().add(i, 'days');
+      const date = today.clone().add(i, 'days');
       return {
         label: date.format('dd'),
         date: date.date(),
@@ -68,14 +60,10 @@ const HomeScreen = () => {
         `${API_BASE_URL}/meal-plan?date=${selectedDay.format('YYYY-MM-DD')}`,
         config
       );
-
       const categorized = { Завтрак: [], Обед: [], Ужин: [], Перекус: [] };
       response.data.forEach((item) => {
-        if (categorized[item.meal_type]) {
-          categorized[item.meal_type].push(item);
-        }
+        if (categorized[item.meal_type]) categorized[item.meal_type].push(item);
       });
-
       setMealPlans(categorized);
     } catch (error) {
       console.error('Ошибка при загрузке плана питания:', error.response?.data || error.message);
@@ -90,6 +78,18 @@ const HomeScreen = () => {
       setAllRecipes(response.data);
     } catch (error) {
       console.error('Ошибка загрузки рецептов:', error.response?.data || error.message);
+    }
+  };
+
+  const handleDeleteMeal = async (mealId) => {
+    try {
+      const config = await getAuthHeader();
+      console.log('Удаление блюда, ID:', mealId);
+console.log('Запрос:', `${API_BASE_URL}/meal-plan/${mealId}`);
+      fetchMealPlans(); // обновить данные после удаления
+    } catch (error) {
+      Alert.alert('Ошибка', 'Не удалось удалить блюдо');
+      console.error(error.response?.data || error.message);
     }
   };
 
@@ -115,7 +115,6 @@ const HomeScreen = () => {
         },
         config
       );
-
       fetchMealPlans();
       setModalVisible(false);
     } catch (error) {
@@ -125,44 +124,53 @@ const HomeScreen = () => {
   };
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {getWeekDates().map((day, index) => (
-          <TouchableOpacity
-            key={index}
-            onPress={() => setSelectedDay(day.full)}
-            style={{
-              marginHorizontal: 8,
-              paddingVertical: 8,
-              paddingHorizontal: 12,
-              backgroundColor: day.full.isSame(selectedDay, 'day') ? '#4CAF50' : '#eee',
-              borderRadius: 20,
-            }}
-          >
-            <Text style={{ color: day.full.isSame(selectedDay, 'day') ? '#fff' : '#333', fontWeight: 'bold' }}>
-              {day.label}, {day.date}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+    <View style={{ flex: 1, padding: 16, backgroundColor: '#f9f9f9' }}>
+      <Text style={{ fontSize: 22, fontWeight: 'bold', marginBottom: 12 }}>
+        План на {selectedDay.format('dddd, D MMMM')}
+      </Text>
+
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+  {getWeekDates().map((day, index) => (
+    <TouchableOpacity
+      key={index}
+      onPress={() => setSelectedDay(day.full)}
+      style={{
+        width: 42,
+        height: 42,
+        borderRadius: 21,
+        backgroundColor: day.full.isSame(selectedDay, 'day') ? '#4CAF50' : '#eee',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      <Text style={{ color: day.full.isSame(selectedDay, 'day') ? '#fff' : '#333', fontWeight: 'bold', fontSize: 12 }}>
+        {day.date}
+      </Text>
+    </TouchableOpacity>
+  ))}
+</View>
 
       {isLoading ? (
         <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 32 }} />
       ) : (
         categories.map((category) => (
-          <View key={category} style={{ marginTop: 24 }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 8 }}>{category}</Text>
+          <View key={category} style={{ marginTop: 20 }}>
+            <Text style={{ fontSize: 17, fontWeight: 'bold', marginBottom: 8 }}>{category}</Text>
             {mealPlans[category].length === 0 ? (
               <TouchableOpacity
                 onPress={() => handleOpenModal(category)}
                 style={{
-                  backgroundColor: '#f0f0f0',
-                  padding: 16,
+                  height: 100,
                   borderRadius: 12,
+                  borderWidth: 1,
+                  borderStyle: 'dashed',
+                  borderColor: '#aaa',
+                  justifyContent: 'center',
                   alignItems: 'center',
+                  backgroundColor: '#fff',
                 }}
               >
-                <Text style={{ color: '#888' }}>Добавить блюдо</Text>
+                <AntDesign name="plus" size={24} color="#888" />
               </TouchableOpacity>
             ) : (
               <FlatList
@@ -170,14 +178,21 @@ const HomeScreen = () => {
                 keyExtractor={(item) => item.id.toString()}
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                renderItem={({ item }) => <RecipeCard recipe={item.recipe || item} />}
+                renderItem={({ item }) => {
+                  const recipe = item.recipe || allRecipes.find(r => r.id === item.recipe_id);
+                  return recipe ? (
+                    <RecipeCard
+                      recipe={recipe}
+                      onDelete={() => handleDeleteMeal(item.id)}
+                    />
+                  ) : null;
+                }}
               />
             )}
           </View>
         ))
       )}
 
-      {/* Встроенное модальное окно выбора рецепта */}
       <Modal visible={modalVisible} animationType="slide" onRequestClose={() => setModalVisible(false)}>
         <View style={{ flex: 1, padding: 16 }}>
           <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>
@@ -217,8 +232,7 @@ const HomeScreen = () => {
   );
 };
 
-// Встроенная карточка рецепта
-const RecipeCard = ({ recipe }) => (
+const RecipeCard = ({ recipe, onDelete }) => (
   <View
     style={{
       backgroundColor: '#fff',
@@ -229,8 +243,25 @@ const RecipeCard = ({ recipe }) => (
       shadowOpacity: 0.1,
       shadowRadius: 6,
       elevation: 3,
+      position: 'relative',
     }}
   >
+    {onDelete && (
+      <TouchableOpacity
+        onPress={onDelete}
+        style={{
+          position: 'absolute',
+          top: 6,
+          right: 6,
+          backgroundColor: 'rgba(0,0,0,0.4)',
+          borderRadius: 12,
+          padding: 4,
+          zIndex: 10,
+        }}
+      >
+        <Text style={{ color: '#fff', fontSize: 12 }}>✕</Text>
+      </TouchableOpacity>
+    )}
     {recipe.image && (
       <Image
         source={{ uri: recipe.image }}
