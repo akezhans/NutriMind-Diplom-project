@@ -126,15 +126,19 @@ export default function ProfileScreen() {
   
   
   const renderChart = () => {
-    if (!weightRecords.length) return null;
+    if (!weightRecords.length) return;
   
     const labels = weightRecords.map(record => new Date(record.date).toLocaleDateString('ru-RU'));
   
     const data = weightRecords.map((item) => item.weight);
   
+
+    console.log("Компонент профиля отрисовался");
+
     return (
       <View style={styles.chartContainer}>
         <Text style={styles.sectionTitle}>Прогресс веса</Text>
+        <Text>Тест: рендер работает?</Text>
         <LineChart
           data={{
             labels,
@@ -341,7 +345,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   chartContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: 'red',
     padding: 16,
     borderRadius: 16,
     shadowColor: '#000',

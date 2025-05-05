@@ -81,17 +81,22 @@ const HomeScreen = () => {
     }
   };
 
-  const handleDeleteMeal = async (mealId) => {
-    try {
-      const config = await getAuthHeader();
-      console.log('Удаление блюда, ID:', mealId);
-console.log('Запрос:', `${API_BASE_URL}/meal-plan/${mealId}`);
-      fetchMealPlans(); // обновить данные после удаления
-    } catch (error) {
-      Alert.alert('Ошибка', 'Не удалось удалить блюдо');
-      console.error(error.response?.data || error.message);
-    }
-  };
+  // const handleDeleteMeal = async (mealId) => {
+  //   try {
+  //     const config = await getAuthHeader();
+  //     console.log('Удаление блюда, ID:', mealId);
+  //     console.log('Запрос:', `${API_BASE_URL}/meal-plan/${mealId}`);
+      
+  //     await axios.delete(`${API_BASE_URL}/meal-plan/${mealId}`, config);
+  
+  //     fetchMealPlans(); // обновление после удаления
+  //   } catch (error) {
+  //     Alert.alert('Ошибка', 'Не удалось удалить блюдо');
+  //     console.error(error.response?.data || error.message);
+  //   }
+  // };
+  
+  
 
   useEffect(() => {
     fetchMealPlans();
@@ -246,7 +251,7 @@ const RecipeCard = ({ recipe, onDelete }) => (
       position: 'relative',
     }}
   >
-    {onDelete && (
+    {/* {onDelete && (
       <TouchableOpacity
         onPress={onDelete}
         style={{
@@ -261,8 +266,9 @@ const RecipeCard = ({ recipe, onDelete }) => (
       >
         <Text style={{ color: '#fff', fontSize: 12 }}>✕</Text>
       </TouchableOpacity>
-    )}
+    )} */}
     {recipe.image && (
+      console.log('Image URL:', recipe.image),
       <Image
         source={{ uri: recipe.image }}
         style={{ width: '100%', height: 100, borderTopLeftRadius: 12, borderTopRightRadius: 12 }}

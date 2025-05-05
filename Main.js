@@ -121,7 +121,7 @@ const todayPhrase = phrases[new Date().getDay()];
       id: '3',
       title: 'Полезный совет',
       text: 'Пей воду после пробуждения.',
-      image: 'https://avatars.mds.yandex.net/i?id=93a261fb4be105cb9931e7b64b7009cd-5478601-images-thumbs&n=13',
+      image: 'https://www.newmouth.com/wp-content/uploads/2020/12/young-woman-reaching-for-glass-of-water-on-bedside-table-scaled.jpg',
     },
   ];
 

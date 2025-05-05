@@ -132,7 +132,7 @@ function CustomDrawerContent(props) {
         });
         setProfile({
           name: response.data.full_name || 'Пользователь',
-          avatarUrl: response.data.profile_picture || null, // или 'avatarUrl' — зависит от API
+          avatarUrl: response.data.avatar || null, // или 'avatarUrl' — зависит от API
         });
       } catch (err) {
         console.error('Ошибка загрузки профиля:', err);
@@ -160,7 +160,7 @@ function CustomDrawerContent(props) {
           source={
             profile.avatarUrl
               ? { uri: profile.avatarUrl }
-              : require('./assets/NMava.jpg') // fallback
+              : require('./assets/Pustoe.jpg') // fallback
           }
           style={styles.avatar}
         />
