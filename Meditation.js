@@ -10,7 +10,7 @@ import {
 import { Audio } from 'expo-av';
 import LottieView from 'lottie-react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';  // Для навигации
+import { useNavigation } from '@react-navigation/native';
 
 const AUDIO_URL = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'; // Замени на своё
 
@@ -21,7 +21,7 @@ export default function MeditationScreen() {
   const intervalRef = useRef(null);
   const animationRef = useRef(null);
 
-  const navigation = useNavigation();  // Для навигации
+  const navigation = useNavigation(); 
 
   const startMeditation = async () => {
     try {
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 40,
     left: 20,
-    zIndex: 1,  // Чтобы кнопка не перекрывала другие элементы
+    zIndex: 1,  
   },
   title: {
     fontSize: 28,

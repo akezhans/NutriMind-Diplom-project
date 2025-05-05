@@ -24,7 +24,7 @@ import MyProducts from './MyProducts';
 import AiScannerPage from './AiScannerPage';
 // import Help from './Help';
 import RecipeDetailsScreen from './RecipeDetailsScreen';
-import Motivation from './Motivation';
+import Habits from './Habits';
 import Meditation from './Meditation';
 import Sport from './Sport';
 
@@ -106,7 +106,7 @@ function AppStack({ setIsAuthenticated }) {
       </Stack.Screen>
       <Stack.Screen name="RecipeDetails" component={RecipeDetailsScreen} />
       <Stack.Screen name="Главная" component={Main} />
-      <Stack.Screen name="Мотивация" component={Motivation} />
+      <Stack.Screen name="Мотивация" component={Habits} />
       <Stack.Screen name="Медитация" component={Meditation} />
       <Stack.Screen name="Спорт" component={Sport} />
     </Stack.Navigator>
