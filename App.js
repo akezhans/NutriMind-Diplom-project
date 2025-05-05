@@ -116,14 +116,38 @@ function AppStack({ setIsAuthenticated }) {
 // Кастомное боковое меню с Logout
 function CustomDrawerContent(props) {
   const { setIsAuthenticated } = props;
+  const [profile, setProfile] = useState({
+    name: '',
+    avatarUrl: null,
+  });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = await SecureStore.getItemAsync('token');
+        const response = await axios.get(`${API_BASE_URL}/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setProfile({
+          name: response.data.full_name || 'Пользователь',
+          avatarUrl: response.data.profile_picture || null, // или 'avatarUrl' — зависит от API
+        });
+      } catch (err) {
+        console.error('Ошибка загрузки профиля:', err);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleLogout = async () => {
     try {
-      // Отправка запроса на сервер для выхода
       await axios.post(`${API_BASE_URL}/signout`, {}, { withCredentials: true });
       await SecureStore.deleteItemAsync('token');
       await AsyncStorage.removeItem('isAuthenticated');
-      setIsAuthenticated(false);  // Сбрасываем состояние аутентификации
+      setIsAuthenticated(false);
     } catch (err) {
       console.error('Ошибка при выходе:', err);
     }
@@ -132,20 +156,27 @@ function CustomDrawerContent(props) {
   return (
     <DrawerContentScrollView {...props}>
       <View style={styles.profileSection}>
-        <Image source={require('./assets/NMava.jpg')} style={styles.avatar} />
-        <Text style={styles.userName}>Akezhan Sailaubekov</Text>
-        <Text style={styles.userRole}>Mobile Developer</Text>
+        <Image
+          source={
+            profile.avatarUrl
+              ? { uri: profile.avatarUrl }
+              : require('./assets/NMava.jpg') // fallback
+          }
+          style={styles.avatar}
+        />
+        <Text style={styles.userName}>{profile.name}</Text>
       </View>
       <DrawerItemList {...props} />
-      <DrawerItem 
-        label="Logout Account" 
-        icon={({ size }) => <Icon name="log-out-outline" size={size} color="red" />} 
-        labelStyle={{ color: 'red' }} 
-        onPress={handleLogout} 
+      <DrawerItem
+        label="Logout Account"
+        icon={({ size }) => <Icon name="log-out-outline" size={size} color="red" />}
+        labelStyle={{ color: 'red' }}
+        onPress={handleLogout}
       />
     </DrawerContentScrollView>
   );
 }
+
 
 // Стили
 const styles = StyleSheet.create({

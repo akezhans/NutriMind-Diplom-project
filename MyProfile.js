@@ -54,15 +54,6 @@ export default function ProfileScreen() {
     getWeightRecords();
   }, []);
 
-
-  const getAuthHeader = async () => {
-    const token = await SecureStore.getItemAsync('token');
-    return {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
-  };
   
   const handleImagePick = async () => {
     try {
@@ -99,7 +90,7 @@ export default function ProfileScreen() {
       formData.append('weight', profile.weight?.toString() || '');
       formData.append('goal_weight', profile.goal_weight?.toString() || '');
   
-      if (profile.profile_picture?.startsWith('file://')) {
+      if (profile.profile_picture && profile.profile_picture.startsWith('file://')) {
         formData.append('profile_picture', {
           uri: profile.profile_picture,
           type: 'image/jpeg',
@@ -107,69 +98,80 @@ export default function ProfileScreen() {
         });
       }
   
-      const config = await getAuthHeader();
-      console.log('Authorization Header:', config);  // Логируем заголовки
+      const token = await SecureStore.getItemAsync('token');
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      };
   
-      // Логируем данные перед отправкой
-      console.log('FormData:', formData);
-  
-      // Проверяем URL
-      console.log('API URL:', `${API_BASE_URL}/profile`);
-  
-      const response = await axios.post(
-        `${API_BASE_URL}/profile`,
-        formData,
-        config
-      );
+      const response = await axios.put(`${API_BASE_URL}/profile`, formData, config);
+
   
       console.log('Profile updated successfully', response.data);
       setIsLoading(false);
+      setEditMode(false); // Можно закрыть режим редактирования
+      Toast.show({ type: 'success', text1: 'Профиль обновлен' });
     } catch (error) {
-      console.error('Ошибка при сохранении данных:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error:', error.response?.data);
+      } else {
+        console.error('Ошибка при сохранении:', error);
+      }
+      Toast.show({ type: 'error', text1: 'Ошибка при сохранении профиля' });
       setIsLoading(false);
     }
   };
   
   
-  
-  
-  
-
   const renderChart = () => {
     if (!weightRecords.length) return null;
-
-    const labels = weightRecords.map((item) => {
-      const d = new Date(item.date);
-      return `${d.getDate()}/${d.getMonth() + 1}`;
-    });
-
+  
+    const labels = weightRecords.map(record => new Date(record.date).toLocaleDateString('ru-RU'));
+  
     const data = weightRecords.map((item) => item.weight);
-
+  
     return (
-      <View style={{ marginTop: 30 }}>
-        <Text style={styles.sectionTitle}>График веса</Text>
+      <View style={styles.chartContainer}>
+        <Text style={styles.sectionTitle}>Прогресс веса</Text>
         <LineChart
-          data={{ labels, datasets: [{ data }] }}
+          data={{
+            labels,
+            datasets: [{ data }]
+          }}
           width={Dimensions.get('window').width - 40}
-          height={220}
+          height={240}
           yAxisSuffix=" кг"
+          fromZero
+          bezier
+          segments={5}
           chartConfig={{
             backgroundColor: '#f0f0f0',
             backgroundGradientFrom: '#ffffff',
             backgroundGradientTo: '#ffffff',
             decimalPlaces: 1,
             color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-            labelColor: () => '#333',
-            style: { borderRadius: 16 },
+            labelColor: () => '#555',
+            propsForDots: {
+              r: '4',
+              strokeWidth: '2',
+              stroke: '#007bff',
+            },
           }}
-          style={{ borderRadius: 16 }}
+          style={{
+            marginVertical: 8,
+            borderRadius: 16,
+          }}
         />
-        <Text style={{ fontSize: 13, color: '#777', textAlign: 'center', marginTop: 6 }}>
-          Последнее обновление: {new Date(weightRecords[weightRecords.length - 1].date).toLocaleDateString('ru-RU')}
+        <Text style={styles.chartInfo}>
+          Последняя запись: {weightRecords[weightRecords.length - 1].weight} кг (
+          {new Date(weightRecords[weightRecords.length - 1].date).toLocaleDateString('ru-RU')})
         </Text>
       </View>
     );
   };
+  
 
   if (isLoading && !Object.keys(profile).length) {
     return <ActivityIndicator style={{ marginTop: 100 }} />;
@@ -182,7 +184,7 @@ export default function ProfileScreen() {
     >
       <ScrollView contentContainerStyle={styles.container}>
         <Image
-          source={{ uri: profile.profile_picture || 'https://placehold.co/100x100' }}
+          source={{ uri: profile.profile_picture  }}
           style={styles.avatar}
         />
         <Text style={{ fontSize: 20, fontWeight: '700', textAlign: 'center', marginBottom: 10 }}>
@@ -191,7 +193,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity
           onPress={() => setEditMode(!editMode)}
-          style={[styles.saveButton, { backgroundColor: '#6c757d' }]}
+          style={[styles.saveButton, { backgroundColor: '#4182F9' }]}
         >
           <Text style={styles.saveButtonText}>
             {editMode ? 'Отменить' : 'Редактировать профиль'}
@@ -201,16 +203,15 @@ export default function ProfileScreen() {
         {editMode && (
           <>
             <TouchableOpacity
-  onPress={() => {
-    console.log('====================================');
-    handleImagePick();
-  }}
-  style={{ backgroundColor: 'red', zIndex: 100, padding: 10 }}
->
-  <Text style={{ textAlign: 'center', color: '#fff', marginTop: 10 }}>
-    Изменить фото
-  </Text>
-</TouchableOpacity>
+                onPress={() => {
+                  handleImagePick();
+                }}
+                style={{ backgroundColor: '#D5D040', zIndex: 100, padding: 10, borderRadius: 12 }}
+            >
+              <Text style={{ textAlign: 'center', color: '#fff', marginTop: 10, fontWeight: '600', fontSize: 16,}}>
+                Изменить фото
+              </Text>
+            </TouchableOpacity>
 
 
 
@@ -261,7 +262,7 @@ export default function ProfileScreen() {
 
             <TouchableOpacity
               onPress={handleSave}
-              style={[styles.saveButton, isLoading && { backgroundColor: '#ccc' }]}
+              style={[styles.saveButton, isLoading && { backgroundColor: '#00AD5A' }]}
               disabled={isLoading}
             >
               <Text style={styles.saveButtonText}>
@@ -287,7 +288,6 @@ export default function ProfileScreen() {
             )}
           </View>
         )}
-
         {renderChart()}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   saveButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#00AD5A',
     padding: 15,
     borderRadius: 12,
     alignItems: 'center',
@@ -339,5 +339,22 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#222',
     marginBottom: 10,
+  },
+  chartContainer: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 4,
+    marginTop: 20,
+  },
+  chartInfo: {
+    fontSize: 13,
+    color: '#777',
+    textAlign: 'center',
+    marginTop: 6,
   },
 });
