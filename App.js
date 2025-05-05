@@ -106,7 +106,7 @@ function AppStack({ setIsAuthenticated }) {
       </Stack.Screen>
       <Stack.Screen name="RecipeDetails" component={RecipeDetailsScreen} />
       <Stack.Screen name="Главная" component={Main} />
-      <Stack.Screen name="Мотивация" component={Habits} />
+      <Stack.Screen name="Привычки" component={Habits} />
       <Stack.Screen name="Медитация" component={Meditation} />
       <Stack.Screen name="Спорт" component={Sport} />
     </Stack.Navigator>
