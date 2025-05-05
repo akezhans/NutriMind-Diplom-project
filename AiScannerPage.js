@@ -6,6 +6,10 @@ import { useNavigation } from '@react-navigation/native';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
+import ScannerImage from './assets/Scan.png'; 
+import { LinearGradient } from 'expo-linear-gradient';
+import { TouchableOpacity } from 'react-native';
+
 
 
 export const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL;
@@ -159,77 +163,156 @@ const AiScannerPage = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <Image source={ScannerImage} style={styles.scannerImage} resizeMode="contain" />
+  
       <Text style={styles.title}>AI Сканер Продуктов</Text>
       <Text style={styles.subtitle}>
-        Загрузите фотографию продукта, и наш ИИ определит его состав, калорийность и статус Халяль/Харам.
+        Загрузите фото продукта — и наш ИИ определит состав, калории и статус Халяль.
       </Text>
-
+  
       {error && <Text style={styles.errorText}>{error}</Text>}
+  
+      <View style={styles.buttonGroup}>
+  <TouchableOpacity onPress={pickImage} style={styles.gradientButton}>
+    <LinearGradient
+      colors={['#A18CD1', '#FBC2EB']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradientBackground}
+    >
+      <Text style={styles.gradientText}>Галерея</Text>
+    </LinearGradient>
+  </TouchableOpacity>
 
-      <Button title="Выбрать изображение из галереи" onPress={pickImage} />
-      <View style={styles.spacing} />
-      <Button title="Сделать фото с камеры" onPress={takePhoto} />
+  <View style={styles.buttonSpacing} />
 
+  <TouchableOpacity onPress={takePhoto} style={styles.gradientButton}>
+    <LinearGradient
+      colors={['#89F7FE', '#66A6FF']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradientBackground}
+    >
+      <Text style={styles.gradientText}>Камера</Text>
+    </LinearGradient>
+  </TouchableOpacity>
+</View>
+  
       {previewUrl && (
         <Image source={{ uri: previewUrl }} style={styles.previewImage} />
       )}
-
-      <Button
-        title={loading ? `Сканирование... ${uploadProgress}%` : 'Сканировать продукт'}
-        onPress={handleScan}
-        disabled={loading || !selectedImage}
-      />
-
-      {loading && <ActivityIndicator size="large" color="#0000ff" style={styles.loadingIndicator} />}
-
+  
+  <View style={{ marginTop: 20 }}>
+  <TouchableOpacity
+    onPress={handleScan}
+    style={[
+      styles.scanButton,
+      (loading || !selectedImage) && styles.disabledButton
+    ]}
+    disabled={loading || !selectedImage}
+  >
+    <Text style={styles.scanButtonText}>
+      {loading ? `Сканирование... ${uploadProgress}%` : 'Сканировать продукт'}
+    </Text>
+  </TouchableOpacity>
+</View>
+      {loading && <ActivityIndicator size="large" color="#007AFF" style={styles.loadingIndicator} />}
+  
       {renderScanResult()}
     </ScrollView>
-  );
+  );  
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#FCFCFC',
     padding: 20,
+    backgroundColor: '#F9F9F9',
+    alignItems: 'center',
+  },
+  scannerImage: {
+    width: 800,
+    height: 350,
+    marginBottom: 20,
+    marginTop: 20,
   },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: 'bold',
-    marginTop: 40,
-    marginBottom: 5,
+    marginBottom: 8,
+    color: '#333',
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
-    color: '#888',
+    color: '#666',
+    textAlign: 'center',
     marginBottom: 20,
+    paddingHorizontal: 10,
   },
   errorText: {
     color: 'red',
-    marginTop: 10,
+    marginBottom: 10,
   },
+  buttonGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  
+  gradientButton: {
+    flex: 1,
+    borderRadius: 25,
+    overflow: 'hidden',
+  },
+  
+  gradientBackground: {
+    paddingVertical: 12,
+    borderRadius: 25,
+    alignItems: 'center',
+  },
+  
+  gradientText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 1,
+  },
+  
+  buttonSpacing: {
+    width: 20,
+  },
+  
   previewImage: {
-    width: 200,
-    height: 200,
-    marginTop: 15,
-    borderRadius: 8,
+    width: 250,
+    height: 250,
+    marginTop: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ccc',
   },
   scanResultContainer: {
-    marginTop: 20,
-    padding: 15,
-    borderWidth: 1,
-    borderRadius: 8,
+    marginTop: 30,
+    padding: 20,
+    borderRadius: 12,
     backgroundColor: '#fff',
-    borderColor: '#ddd',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 3,
+    width: '100%',
   },
   scanResultTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 12,
+    textAlign: 'center',
   },
   scanResultText: {
     fontSize: 14,
-    color: '#555',
+    color: '#444',
     marginBottom: 5,
   },
   bold: {
@@ -238,26 +321,50 @@ const styles = StyleSheet.create({
   scanResultSubtitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginTop: 10,
+    marginTop: 15,
+    marginBottom: 5,
   },
   warningContainer: {
-    marginTop: 10,
+    marginTop: 15,
+    backgroundColor: '#FFF3CD',
+    padding: 10,
+    borderRadius: 8,
   },
   warningTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: 'orange',
+    color: '#856404',
+    marginBottom: 5,
   },
   warningText: {
-    fontSize: 14,
-    color: 'orange',
+    fontSize: 13,
+    color: '#856404',
   },
   loadingIndicator: {
     marginTop: 20,
   },
-  spacing: {
-    height: 20,
+  scanButton: {
+    backgroundColor: '#28a745',
+    paddingVertical: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  
+  scanButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  
+  disabledButton: {
+    backgroundColor: '#a5d6a7', // Светло-зелёный для disabled-состояния
   },
 });
+
 
 export default AiScannerPage;
