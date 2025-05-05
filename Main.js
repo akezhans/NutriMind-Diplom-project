@@ -126,7 +126,7 @@ const todayPhrase = phrases[new Date().getDay()];
   ];
 
   const sections = [
-    { title: 'Мотивация', color: '#FF9800', icon: 'lightbulb-outline' },
+    { title: 'Привычки', color: '#FF9800', icon: 'lightbulb-outline' },
     { title: 'Медитация', color: '#87CEFA', icon: 'spa' },
     { title: 'Спорт', color: '#90EE90', icon: 'fitness-center' },
   ];
@@ -163,26 +163,26 @@ const todayPhrase = phrases[new Date().getDay()];
 
 const styles = StyleSheet.create({
   phraseSection: {
-    backgroundColor: '#f1f8e9',
+    backgroundColor: '#355c7d',
     padding: 20,
     borderRadius: 16,
     marginHorizontal: 20,
     marginVertical: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#aed581',
+    borderLeftColor: '#118DC2',
   },
   
   phraseTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#558b2f',
+    color: '#FFFFE6',
     marginBottom: 6,
   },
   
   phraseText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#33691e',
+    color: '#FFFFE6',
     lineHeight: 24,
   },
   
