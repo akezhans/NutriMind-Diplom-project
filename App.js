@@ -24,6 +24,9 @@ import MyProducts from './MyProducts';
 import AiScannerPage from './AiScannerPage';
 // import Help from './Help';
 import RecipeDetailsScreen from './RecipeDetailsScreen';
+import Motivation from './Motivation';
+import Meditation from './Meditation';
+import Sport from './Sport';
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -102,6 +105,10 @@ function AppStack({ setIsAuthenticated }) {
         {(props) => <DrawerNavigator {...props} setIsAuthenticated={setIsAuthenticated} />}
       </Stack.Screen>
       <Stack.Screen name="RecipeDetails" component={RecipeDetailsScreen} />
+      <Stack.Screen name="Главная" component={Main} />
+      <Stack.Screen name="Мотивация" component={Motivation} />
+      <Stack.Screen name="Медитация" component={Meditation} />
+      <Stack.Screen name="Спорт" component={Sport} />
     </Stack.Navigator>
   );
 }

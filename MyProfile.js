@@ -18,6 +18,9 @@ import Constants from 'expo-constants';
 import axiosInstance from './axiosInstance';
 import Toast from 'react-native-toast-message';
 import RNPickerSelect from 'react-native-picker-select';
+import * as SecureStore from 'expo-secure-store';
+import axios from 'axios';
+
 
 export const API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL;
 
@@ -51,32 +54,51 @@ export default function ProfileScreen() {
     getWeightRecords();
   }, []);
 
-  const handleImagePick = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
 
-    if (!result.canceled) {
-      setProfile((prevProfile) => ({
-        ...prevProfile,
-        profile_picture: result.assets[0].uri,
-      }));
+  const getAuthHeader = async () => {
+    const token = await SecureStore.getItemAsync('token');
+    return {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+  };
+  
+  const handleImagePick = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Правильное использование mediaTypes
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+  
+      if (!result.canceled) {
+        const selectedImageUri = result.assets[0].uri;
+        setProfile((prevProfile) => ({
+          ...prevProfile,
+          profile_picture: selectedImageUri, // Обновляем profile_picture с новым изображением
+        }));
+  
+        console.log('Image selected:', selectedImageUri);
+      }
+    } catch (error) {
+      console.error('Ошибка при выборе изображения:', error);
     }
   };
-
+  
+  
+  
   const handleSave = async () => {
     try {
       setIsLoading(true);
-
+  
       const formData = new FormData();
       formData.append('full_name', profile.full_name || '');
       formData.append('gender', profile.gender || '');
       formData.append('weight', profile.weight?.toString() || '');
       formData.append('goal_weight', profile.goal_weight?.toString() || '');
-
+  
       if (profile.profile_picture?.startsWith('file://')) {
         formData.append('profile_picture', {
           uri: profile.profile_picture,
@@ -84,29 +106,34 @@ export default function ProfileScreen() {
           name: 'profile.jpg',
         });
       }
-
-      const response = await axiosInstance.put(`/profile`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      setProfile(response.data.user);
+  
+      const config = await getAuthHeader();
+      console.log('Authorization Header:', config);  // Логируем заголовки
+  
+      // Логируем данные перед отправкой
+      console.log('FormData:', formData);
+  
+      // Проверяем URL
+      console.log('API URL:', `${API_BASE_URL}/profile`);
+  
+      const response = await axios.post(
+        `${API_BASE_URL}/profile`,
+        formData,
+        config
+      );
+  
+      console.log('Profile updated successfully', response.data);
       setIsLoading(false);
-
-      Toast.show({
-        type: 'success',
-        text1: 'Профиль обновлён',
-      });
     } catch (error) {
-      console.error('Ошибка при сохранении:', error);
+      console.error('Ошибка при сохранении данных:', error);
       setIsLoading(false);
-      Toast.show({
-        type: 'error',
-        text1: 'Ошибка при сохранении профиля',
-      });
     }
   };
+  
+  
+  
+  
+  
 
   const renderChart = () => {
     if (!weightRecords.length) return null;
@@ -173,11 +200,19 @@ export default function ProfileScreen() {
 
         {editMode && (
           <>
-            <TouchableOpacity onPress={handleImagePick}>
-              <Text style={{ textAlign: 'center', color: '#007bff', marginTop: 10 }}>
-                Изменить фото
-              </Text>
-            </TouchableOpacity>
+            <TouchableOpacity
+  onPress={() => {
+    console.log('====================================');
+    handleImagePick();
+  }}
+  style={{ backgroundColor: 'red', zIndex: 100, padding: 10 }}
+>
+  <Text style={{ textAlign: 'center', color: '#fff', marginTop: 10 }}>
+    Изменить фото
+  </Text>
+</TouchableOpacity>
+
+
 
             <Text style={styles.label}>Имя</Text>
             <TextInput
